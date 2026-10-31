@@ -7,6 +7,18 @@
 * **Added:** `flexlayout__tab_button--multi-selected` and `flexlayout__border_button--multi-selected` classes (`CLASSES.FLEXLAYOUT__TAB_BUTTON__MULTI_SELECTED`, `CLASSES.FLEXLAYOUT__BORDER_BUTTON__MULTI_SELECTED`), tinted with the new `--fl-color-tab-multi-selected-background` theme variable.
 * **Added:** `keyMap` bindings `extendTabSelectionPrevious` (Shift+ArrowLeft), `extendTabSelectionNext` (Shift+ArrowRight), `toggleTabSelection` (Mod+Enter) and `clearTabSelection` (Escape). Key specs accept the `Mod` modifier (Meta on Apple platforms, Ctrl elsewhere).
 * **Added:** `DragRectRenderCallback` receives an optional fourth argument `nodes` with every dragged tab, grabbed tab first; a selection drag's default drag image reads "Move tabs (n)".
+* **Added:** with `tabNavigation="areas"`, the splitters between areas are Tab stops (in layout order between the areas they separate, an open border's splitter before the border), so panels can be resized from the keyboard; arrow keys still resize and F6 / Shift+F6 move on to the next / previous area.
+* **Added:** with `tabNavigation="areas"`, tabsets without a tab strip (`enableTabStrip: false`) and empty tabsets are areas entered straight into their content: their stop is the first focusable element of the shown panel or the `onTabSetPlaceHolder` content (else the panel or content itself, which gets `tabindex="-1"` for an empty tabset).
+* **Added:** `I18nLabel.Selected_For_Move` ("Selected for move"), the `aria-description` of tab and border buttons in the tab selection.
+* **Added:** keyboard activation (Enter / Space, or entering a tab's content) sets the tab the first Mod+Enter pairs with, as a click does.
+* **Fixed:** with `tabNavigation="areas"`, the toolbar of a shown border without tabs (`enableAutoHide: false`) is reachable by Tab again, after the areas.
+* **Fixed:** maximizing or restoring a tabset (toolbar button, tab strip double-click or `Actions.maximizeToggle`) while focus is on its tab strip or toolbar keeps focus on its shown tab instead of dropping it to the page body.
+* **Fixed:** the tab selection drops tabs missing from a new `model` prop that keeps the layout mounted (e.g. a `useUndo` undo or redo).
+* **Fixed:** Escape clears the tab selection only when pressed within the layout.
+* **Fixed:** with `tabNavigation="areas"`, Tab out of tab content follows the browser: hidden (`visibility: hidden`), `inert` and disabled fieldset controls no longer count as focusable, and iframes, editing hosts and `summary` elements do.
+* **Fixed:** `tabDragSpeed={0}` disables the drag outline transition instead of falling back to 0.3s.
+* **Changed:** area navigation skips its layout scans for keys and focus moves that cannot change the area, and no longer listens for Tab without `tabNavigation="areas"`.
+* **Docs:** floating panels are not reached by Tab with `tabNavigation="areas"`.
 
 ## 0.11.1 - 2026-09-26
 * **Fixed:** `matchesKey` no longer throws on a `keydown` event that carries no `key` (e.g. a synthetic event or browser autofill) ([#529](https://github.com/caplin/FlexLayout/issues/529)).

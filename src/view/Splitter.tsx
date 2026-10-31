@@ -31,6 +31,16 @@ export const Splitter = (props: ISplitterProps) => {
     const initalSizes = React.useRef<{ initialSizes: number[]; sum: number; startPosition: number }>({ initialSizes: [], sum: 0, startPosition: 0 });
     const draggingTimerRef = React.useRef<number | undefined>(undefined);
 
+    // callback ref: fires on attach/detach including remounts, unlike an effect (the controller
+    // keeps the splitters as Tab stops for tabNavigation "areas")
+    const setSelfRef = React.useCallback(
+        (element: HTMLDivElement | null) => {
+            selfRef.current = element;
+            controller.registerSplitter(node, index, element);
+        },
+        [controller, node, index],
+    );
+
     const onTouchStart = React.useCallback((event: TouchEvent) => {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -271,7 +281,7 @@ export const Splitter = (props: ISplitterProps) => {
         <div
             className={className}
             style={style}
-            ref={selfRef}
+            ref={setSelfRef}
             role="separator"
             aria-label={controller.i18nName(I18nLabel.Splitter)}
             aria-orientation={horizontal ? "vertical" : "horizontal"}

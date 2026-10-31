@@ -5,6 +5,8 @@ export enum I18nLabel {
     Pinned_Tab = "flexlayout.ui.pinned.tab",
     /** the aria-label of the inline tab rename textbox */
     Rename_Tab = "flexlayout.ui.rename.tab",
+    /** the accessible description of a tab button in the tab selection (the tabs that are moved together) */
+    Selected_For_Move = "flexlayout.ui.selected.for.move",
     /** the tabset close button tooltip */
     Close_Tabset = "flexlayout.ui.close.tabset",
     /** the active tabset indicator icon tooltip */
@@ -100,6 +102,7 @@ export const I18nLabelDefaults: Record<string, string> = {
     [I18nLabel.Close_Tab]: "Close",
     [I18nLabel.Pinned_Tab]: "Pinned",
     [I18nLabel.Rename_Tab]: "Rename tab",
+    [I18nLabel.Selected_For_Move]: "Selected for move",
     [I18nLabel.Close_Tabset]: "Close tabset",
     [I18nLabel.Active_Tabset]: "Active tabset",
     [I18nLabel.Move_Tabset]: "Move tabset",

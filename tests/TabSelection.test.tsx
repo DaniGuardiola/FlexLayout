@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import * as React from "react";
 import { act, fireEvent, render, waitFor } from "@testing-library/react";
-import { Actions, IJsonModel, ILayoutApi, Layout, Model, TabNode, TabSetNode } from "../src";
+import { Actions, DockLocation, IJsonModel, ILayoutApi, Layout, Model, TabNode, TabSetNode, useUndo } from "../src";
 
 const factory = (node: TabNode) => <div>content for {node.getName()}</div>;
 
@@ -127,7 +127,7 @@ describe("tab selection", () => {
         expect(ref.current!.getSelectedTabIds()).toEqual([]);
 
         act(() => ref.current!.setSelectedTabIds(["t0", "t1"]));
-        fireEvent.keyDown(document, { key: "Escape" });
+        fireEvent.keyDown(button("/ts0/tb2"), { key: "Escape" });
         expect(ref.current!.getSelectedTabIds()).toEqual([]);
 
         act(() => ref.current!.setSelectedTabIds(["t0", "t1"]));
@@ -135,6 +135,45 @@ describe("tab selection", () => {
         expect(ref.current!.getSelectedTabIds()).toEqual(["t0", "t1"]);
         fireEvent.pointerDown(button("/ts0/tabstrip"));
         expect(ref.current!.getSelectedTabIds()).toEqual([]);
+    });
+
+    it("keeps the selection on Escape outside the layout", () => {
+        const model = Model.fromJson(json);
+        const ref = React.createRef<ILayoutApi>();
+        render(
+            <>
+                <input aria-label="outside" />
+                <Layout model={model} factory={factory} ref={ref} />
+            </>,
+        );
+        act(() => ref.current!.setSelectedTabIds(["t0", "t1"]));
+        fireEvent.keyDown(document.querySelector('[aria-label="outside"]')!, { key: "Escape" });
+        fireEvent.keyDown(document, { key: "Escape" });
+        expect(ref.current!.getSelectedTabIds()).toEqual(["t0", "t1"]);
+    });
+
+    it("drops tabs missing from a model swapped in by undo", () => {
+        const ref = React.createRef<ILayoutApi>();
+        const onTabSelectionChange = vi.fn();
+        let undo = () => {};
+        let current: Model | null = null;
+        const App = () => {
+            const result = useUndo(() => Model.fromJson(json));
+            undo = result.undo;
+            current = result.model;
+            return <Layout model={result.model!} factory={factory} ref={ref} onTabSelectionChange={onTabSelectionChange} />;
+        };
+        render(<App />);
+        act(() => {
+            current!.doAction(Actions.addTab({ type: "tab", id: "added", name: "Added" }, "ts1", DockLocation.CENTER, -1));
+        });
+        act(() => ref.current!.setSelectedTabIds(["t0", "added"]));
+        expect(ref.current!.getSelectedTabIds()).toEqual(["t0", "added"]);
+        act(() => undo());
+        expect(current!.getNodeById("added")).toBeUndefined();
+        expect(ref.current!.getSelectedTabIds()).toEqual([]);
+        expect(onTabSelectionChange).toHaveBeenLastCalledWith([]);
+        expect(multiSelected()).toEqual([]);
     });
 
     it("drops deleted tabs and clears when fewer than two remain", () => {
@@ -168,6 +207,40 @@ describe("tab selection", () => {
         expect(ref.current!.getSelectedTabIds()).toEqual([]);
     });
 
+    it("pairs the first toggle key press with the last keyboard activated tab", () => {
+        const { ref } = renderLayout();
+        fireEvent.click(button("/ts0/tb0"));
+        fireEvent.keyDown(button("/ts1/tb1"), { key: "Enter" });
+        fireEvent.keyDown(button("/ts0/tb3"), { key: "Enter", ctrlKey: true });
+        expect(ref.current!.getSelectedTabIds()).toEqual(["t3", "t5"]);
+    });
+
+    it("starts a selection from the toggle key on two tabs, never showing a single selected tab", () => {
+        const { ref } = renderLayout();
+        fireEvent.click(button("/ts0/tb0"));
+        fireEvent.keyDown(button("/border/left/tb1"), { key: " " });
+        fireEvent.keyDown(button("/ts0/tb2"), { key: "Enter", ctrlKey: true });
+        expect(ref.current!.getSelectedTabIds()).toEqual(["b1", "t2"]);
+        act(() => ref.current!.setSelectedTabIds([]));
+        // the toggle key on the anchor itself selects nothing, then pairs with the next tab
+        fireEvent.keyDown(button("/ts0/tb1"), { key: "Enter" });
+        fireEvent.keyDown(button("/ts0/tb1"), { key: "Enter", ctrlKey: true });
+        expect(ref.current!.getSelectedTabIds()).toEqual([]);
+        expect(multiSelected()).toEqual([]);
+        fireEvent.keyDown(button("/ts1/tb0"), { key: "Enter", ctrlKey: true });
+        expect(ref.current!.getSelectedTabIds()).toEqual(["t1", "t4"]);
+    });
+
+    it("describes selected tab and border buttons to assistive technology", async () => {
+        const { ref } = renderLayout({ i18nTranslator: (key) => (key === "flexlayout.ui.selected.for.move" ? "Marked" : key) });
+        act(() => ref.current!.setSelectedTabIds(["t1", "b0"]));
+        await waitFor(() => expect(button("/ts0/tb1")).toHaveAttribute("aria-description", "Marked"));
+        expect(button("/border/left/tb0")).toHaveAttribute("aria-description", "Marked");
+        expect(button("/ts0/tb0")).not.toHaveAttribute("aria-description");
+        act(() => ref.current!.setSelectedTabIds([]));
+        await waitFor(() => expect(button("/ts0/tb1")).not.toHaveAttribute("aria-description"));
+    });
+
     it("passes every dragged tab to onRenderDragRect, grabbed tab first", () => {
         const onRenderDragRect = vi.fn(() => undefined);
         const { model, ref } = renderLayout({ onRenderDragRect });
@@ -179,5 +252,25 @@ describe("tab selection", () => {
         fireEvent.dragStart(button("/ts0/tb0"), { dataTransfer: dataTransfer() });
         expect(onRenderDragRect).toHaveBeenLastCalledWith(expect.anything(), model.getNodeById("t0"), undefined, [model.getNodeById("t0")]);
         fireEvent.dragEnd(button("/ts0/tb0"));
+    });
+});
+
+describe("tab drag outline", () => {
+    const outlineTransition = (props: Partial<React.ComponentProps<typeof Layout>>) => {
+        renderLayout(props);
+        fireEvent.dragStart(button("/ts0/tb1"), { dataTransfer: dataTransfer() });
+        const layout = button("/ts0/tb1").closest(".flexlayout__layout")!;
+        fireEvent.dragEnter(layout, { dataTransfer: dataTransfer() });
+        const transition = (layout.querySelector(".flexlayout__outline_rect") as HTMLElement | null)?.style.transition;
+        fireEvent.dragEnd(button("/ts0/tb1"));
+        return transition;
+    };
+
+    it("moves with a 0.3s transition by default", () => {
+        expect(outlineTransition({})).toContain("top 0.3s");
+    });
+
+    it("has no transition when tabDragSpeed is 0", () => {
+        expect(outlineTransition({ tabDragSpeed: 0 })).toContain("top 0s");
     });
 });

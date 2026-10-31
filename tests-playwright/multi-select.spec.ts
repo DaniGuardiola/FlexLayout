@@ -167,6 +167,38 @@ test.describe("tab multi-select", () => {
         await expect(findTabButton(page, "/ts0", 3)).not.toHaveClass(MULTI);
     });
 
+    test("Cmd/Ctrl+Enter pairs with the last keyboard activated tab, not the last clicked one", async ({ page }) => {
+        await load(page);
+        await findTabButton(page, "/ts0", 0).click();
+        await findTabButton(page, "/ts1", 0).focus();
+        await page.keyboard.press("ArrowRight");
+        await page.keyboard.press("Enter");
+        await expect(findTabButton(page, "/ts1", 1)).toHaveClass(/flexlayout__tab_button--selected/);
+        await findTabButton(page, "/ts0", 2).focus();
+        await page.keyboard.press("ControlOrMeta+Enter");
+        await expect.poll(() => multiSelectedNames(page)).toEqual(["Three", "Six"]);
+    });
+
+    test("selected tabs are described to assistive technology", async ({ page }) => {
+        await load(page);
+        await findTabButton(page, "/ts0", 0).click();
+        await findTabButton(page, "/border/left", 1).click({ modifiers: ["ControlOrMeta"] });
+        await expect.poll(() => multiSelectedNames(page)).toEqual(["L2", "One"]);
+        await expect(findTabButton(page, "/ts0", 0)).toHaveAttribute("aria-description", "Selected for move");
+        await expect(findTabButton(page, "/border/left", 1)).toHaveAttribute("aria-description", "Selected for move");
+        await expect(findTabButton(page, "/ts0", 1)).not.toHaveAttribute("aria-description");
+    });
+
+    test("Escape outside the layout keeps the selection", async ({ page }) => {
+        await load(page);
+        await findTabButton(page, "/ts0", 0).click();
+        await findTabButton(page, "/ts0", 1).click({ modifiers: ["Shift"] });
+        await expect.poll(() => multiSelectedNames(page)).toEqual(["One", "Two"]);
+        await page.getByRole("combobox", { name: "Layout" }).focus();
+        await page.keyboard.press("Escape");
+        await expect.poll(() => multiSelectedNames(page)).toEqual(["One", "Two"]);
+    });
+
     test("closing tabs drops them from the selection", async ({ page }) => {
         await load(page);
         await findTabButton(page, "/ts0", 0).click();

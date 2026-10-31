@@ -82,6 +82,7 @@ export const BorderButton = (props: IBorderButtonProps) => {
 
     // focus the first focusable element in the tab content, or the panel
     const focusTabContent = () => {
+        controller.setTabSelectionAnchor(tabNode);
         const doc = selfRef.current!.ownerDocument;
         const focusPanel = () => focusFirstIn(doc.getElementById(domId("flexlayout-tab-", tabNode.getId())));
         if (selected) {
@@ -100,7 +101,7 @@ export const BorderButton = (props: IBorderButtonProps) => {
             focusTabContent();
             event.preventDefault();
         } else if (matchesKey(event, keyMap.toggleTabSelection)) {
-            controller.tabSelectionClick(tabNode, { shiftKey: false, ctrlKey: true, metaKey: false });
+            controller.toggleTabSelection(tabNode);
             event.preventDefault();
         } else if (matchesKey(event, keyMap.extendTabSelectionPrevious)) {
             extendTabSelection(-1);
@@ -115,6 +116,7 @@ export const BorderButton = (props: IBorderButtonProps) => {
             focusEdgeTab(event.key === "End");
             event.preventDefault();
         } else if (event.key === "Enter" || event.key === " ") {
+            controller.setTabSelectionAnchor(tabNode);
             onClick();
             event.preventDefault();
         } else if ((event.key === "ArrowLeft" || event.key === "ArrowUp") && !hasModifier(event)) {
@@ -222,7 +224,8 @@ export const BorderButton = (props: IBorderButtonProps) => {
         classNames += " " + cm(CLASSES.FLEXLAYOUT__BORDER_BUTTON__UNSELECTED);
     }
 
-    if (controller.isTabMultiSelected(tabNode)) {
+    const multiSelected = controller.isTabMultiSelected(tabNode);
+    if (multiSelected) {
         classNames += " " + cm(CLASSES.FLEXLAYOUT__BORDER_BUTTON__MULTI_SELECTED);
     }
 
@@ -316,6 +319,7 @@ export const BorderButton = (props: IBorderButtonProps) => {
             // explicit name to exclude the close button from the accessible name
             aria-label={editing ? undefined : renderState.name}
             aria-keyshortcuts={editing ? undefined : ariaKeyshortcuts}
+            aria-description={!editing && multiSelected ? controller.i18nName(I18nLabel.Selected_For_Move) : undefined}
             tabIndex={editing ? -1 : isTabbable() && controller.isAreaTabStop(tabNode.getTabContainer()) ? 0 : -1}
             onKeyDown={onKeyDown}
             data-layout-path={path}

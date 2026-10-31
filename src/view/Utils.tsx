@@ -101,10 +101,18 @@ export function focusFirstIn(container: HTMLElement | null) {
 
 /** @internal the visible elements within the container that Tab moves through, in document order */
 export function getTabbableElements(container: HTMLElement): HTMLElement[] {
+    const editable = '[contenteditable]:not([contenteditable="false"])';
     const elements = container.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        'a[href], button:not(:disabled), input:not(:disabled):not([type="hidden"]), select:not(:disabled), textarea:not(:disabled), iframe, summary, ' + editable + ', [tabindex]:not([tabindex="-1"])',
     );
-    return Array.from(elements).filter((element) => element.tabIndex >= 0 && (typeof element.checkVisibility !== "function" || element.checkVisibility()));
+    // editing hosts report tabIndex -1 but are tabbable unless given a tabindex; controls in a
+    // disabled fieldset match :disabled, and inert or visibility:hidden elements are skipped too
+    return Array.from(elements).filter(
+        (element) =>
+            (element.tabIndex >= 0 || (!element.hasAttribute("tabindex") && element.matches(editable))) &&
+            element.closest("[inert]") === null &&
+            (typeof element.checkVisibility !== "function" || element.checkVisibility({ visibilityProperty: true })),
+    );
 }
 
 /** @internal */

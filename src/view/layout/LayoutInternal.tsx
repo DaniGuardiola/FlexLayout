@@ -69,6 +69,7 @@ export const LayoutInternal = React.forwardRef<LayoutController, ILayoutInternal
         // then position the tab panels imperatively (no re-render needed for geometry changes)
         const changed = controller.syncLayoutMetrics();
         controller.positionTabPanels();
+        controller.applyPendingFocus();
 
         if (controller.isMainLayout()) {
             controller.updateLayoutMetrics();
@@ -227,6 +228,7 @@ export const LayoutInternal = React.forwardRef<LayoutController, ILayoutInternal
         controller.setLayout(layout);
 
         if (controller.isMainLayout()) {
+            controller.setSelectedTabIds(controller.getSelectedTabIds()); // drops tabs the new model lacks
             const changeListener = { onAfterAction: controller.onModelChange };
             currentModel.addChangeListener(changeListener);
             return () => {

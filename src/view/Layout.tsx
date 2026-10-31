@@ -26,11 +26,12 @@ export interface ILayoutProps {
     keyMap?: IKeyMap;
     /** how Tab moves focus through the layout. "dom" (the default) follows the document order of
      * every focusable element. "areas" moves between areas instead: Tab / Shift+Tab go from the
-     * shown tab of one tabset or border to the next (tabsets in layout order, then borders, then
-     * the focusable elements of the border toolbars), skipping tab content and toolbar buttons;
-     * Enter moves into a tab's content, Tab past its last focusable element goes on to the next
-     * area, and Escape returns to the tab. The area keys are configured via keyMap (nextArea,
-     * previousArea, enterArea, exitArea) */
+     * shown tab of one tabset or border to the next (tabsets in layout order with the splitters
+     * between them, then borders, then the focusable elements of the border toolbars), skipping
+     * tab content and toolbar buttons; Enter moves into a tab's content, Tab past its last
+     * focusable element goes on to the next stop, and Escape returns to the tab. A tabset without
+     * a tab strip or without tabs is entered straight into its content. The area keys are
+     * configured via keyMap (nextArea, previousArea, enterArea, exitArea) */
     tabNavigation?: "dom" | "areas";
     /** Custom icons for close, pin, maximize, restore, more, popout buttons. */
     icons?: IIcons;
@@ -87,7 +88,7 @@ export interface ILayoutProps {
     onTabSetPlaceHolder?: TabSetPlaceHolderCallback;
     /** Name given to popout windows, defaults to 'Popout Window' */
     popoutWindowName?: string;
-    /** the transition speed of the drag rectangle from one position to another, default is 0.3 secs */
+    /** the transition speed of the drag rectangle from one position to another, default is 0.3 secs; 0 disables the transition */
     tabDragSpeed?: number;
     /** set to constrain floating panels to within the layout control */
     constrainFloatPanels?: boolean;

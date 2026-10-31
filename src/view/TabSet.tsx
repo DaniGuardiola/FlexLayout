@@ -591,8 +591,9 @@ export const TabSet = (props: ITabSetProps) => {
             }
         }
 
+        // with tabNavigation "areas" an empty tabset is an area that Tab can focus when its placeholder has nothing focusable
         let content = (
-            <div ref={setContentRef} className={cm(CLASSES.FLEXLAYOUT__TABSET_CONTENT)}>
+            <div ref={setContentRef} className={cm(CLASSES.FLEXLAYOUT__TABSET_CONTENT)} tabIndex={controller.isAreaNavigation() && tabsetNode.getTabNodes().length === 0 ? -1 : undefined}>
                 {emptyTabset}
             </div>
         );

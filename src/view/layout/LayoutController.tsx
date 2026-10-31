@@ -31,6 +31,12 @@ import { DragTabButton } from "../DragTabButton";
 /** @internal */
 export type MeasurableKind = "row" | "tabset" | "tabstrip" | "tabsetcontent" | "tabbutton" | "grouppill" | "groupendmarker" | "borderheader" | "bordercontent";
 
+// a Tab stop with tabNavigation "areas": an area's tab or content, a splitter or a border toolbar control
+interface IAreaStop {
+    element: HTMLElement;
+    area?: TabSetNode | BorderNode;
+}
+
 /** @internal */
 export interface ILayoutInternalProps extends ILayoutProps {
     parentRedrawRevision: object;
@@ -95,10 +101,14 @@ export class LayoutController {
     private _selectedTabIds: string[] = [];
     private _tabSelectionAnchorId: string | undefined = undefined;
     // tabNavigation "areas": the area that last held focus (entered by Tab from outside the layout),
-    // the elements at both ends of the layout that Tab leaves from, and whether a Tab key is moving focus
+    // the elements at both ends of the layout that Tab leaves from, whether a Tab key is moving
+    // focus, and the splitter elements (by node id and index) that Tab stops on between the areas
     private _currentAreaId: string | undefined = undefined;
     private _areaSentinels: (HTMLElement | null)[] = [null, null];
     private _areaTabPending: boolean = false;
+    private _splitters: Map<string, HTMLElement> = new Map();
+    // the id of the element to focus after the next render (a tab button re-rendered by a maximize toggle)
+    private _pendingFocusId: string | undefined = undefined;
 
     constructor(
         props: ILayoutInternalProps,
@@ -287,6 +297,10 @@ export class LayoutController {
 
         if (this._selectedTabIds.length > 0) {
             this.setSelectedTabIds(this._selectedTabIds); // drops deleted tabs
+        }
+
+        if (action.type === Actions.MAXIMIZE_TOGGLE) {
+            this.keepFocusOnMaximizeToggle(action);
         }
 
         if (action.isAdjusting() && (action.type === Actions.ADJUST_WEIGHTS || action.type === Actions.ADJUST_BORDER_SPLIT)) {
@@ -506,6 +520,27 @@ export class LayoutController {
         }
     }
 
+    // maximizing or restoring a tabset re-renders it (in or out of a portal), which drops focus held
+    // by its tab strip or toolbar: when it had focus, focus its shown tab once it is rendered again
+    private keepFocusOnMaximizeToggle(action: Action) {
+        const tabset = this._props.model.getNodeById(action.data.node);
+        const layout = this._props.model.getLayouts().get(action.data.layoutId ?? Model.MAIN_LAYOUT_ID);
+        const controller = layout && getViewController(layout);
+        const selected = tabset instanceof TabSetNode ? tabset.getSelectedNode() : undefined;
+        const active = controller?._currentDocument?.activeElement;
+        if (controller && selected && active && controller._measurables.get("tabset:" + tabset!.getId())?.element.contains(active)) {
+            controller._pendingFocusId = domId("flexlayout-tabbutton-", selected.getId());
+        }
+    }
+
+    // called after every render: focuses the element noted to receive focus
+    applyPendingFocus() {
+        if (this._pendingFocusId !== undefined) {
+            this._currentDocument?.getElementById(this._pendingFocusId)?.focus();
+            this._pendingFocusId = undefined;
+        }
+    }
+
     // the closeOverlayBorder key (Escape by default) closes an open overlay border panel when
     // focus is inside it (or on its tab button)
     onOverlayBorderKeyDown = (event: KeyboardEvent) => {
@@ -604,20 +639,20 @@ export class LayoutController {
         return this._props.tabNavigation === "areas" && (this.isMainLayout() || this._layout.getType() === "window");
     }
 
-    // the areas in navigation order: the tabsets showing a tab strip in layout tree order (rows lay
-    // out their children left to right or top to bottom, so this is the visual reading order; only
-    // the maximized tabset while one is maximized), then the borders with tabs in model order
+    // the areas in navigation order: the tabsets in layout tree order (rows lay out their children
+    // left to right or top to bottom, so this is the visual reading order; only the maximized
+    // tabset while one is maximized), then the borders with tabs in model order
     getNavigationAreas(): (TabSetNode | BorderNode)[] {
         const areas: (TabSetNode | BorderNode)[] = [];
         const maximized = this._props.model.getMaximizedTabset(this._layoutId);
         this._props.model.visitLayoutNodes(this._layoutId, (node) => {
-            if (node instanceof TabSetNode && node.isEnableTabStrip() && node.getTabNodes().length > 0 && (maximized === undefined || node === maximized)) {
+            if (node instanceof TabSetNode && this.isNavigationTabset(node, maximized)) {
                 areas.push(node);
             }
         });
         if (this.isMainLayout()) {
             for (const border of this._props.model.getBorderSet().getBorders()) {
-                if (border.isShowing() && border.getTabNodes().length > 0) {
+                if (this.isNavigationBorder(border)) {
                     areas.push(border);
                 }
             }
@@ -625,7 +660,16 @@ export class LayoutController {
         return areas;
     }
 
-    // the area whose tab Tab enters the layout on: the one that last held focus, else the first
+    // a tabset is an area unless another one is maximized, or it has tabs but neither a tab strip nor a shown tab
+    private isNavigationTabset(tabset: TabSetNode, maximized: TabSetNode | undefined) {
+        return (maximized === undefined || tabset === maximized) && (tabset.isEnableTabStrip() || tabset.getTabNodes().length === 0 || tabset.getSelectedNode() !== undefined);
+    }
+
+    private isNavigationBorder(border: BorderNode) {
+        return border.isShowing() && border.getTabNodes().length > 0;
+    }
+
+    // the area whose stop Tab enters the layout on: the one that last held focus, else the first
     getCurrentArea(): TabSetNode | BorderNode | undefined {
         const areas = this.getNavigationAreas();
         return areas.find((area) => area.getId() === this._currentAreaId) ?? areas[0];
@@ -640,56 +684,120 @@ export class LayoutController {
         this._areaSentinels[index] = element;
     }
 
-    // an area's focus stop: its shown tab, or its first tab when a border is collapsed
-    private getAreaTabButton(area: TabSetNode | BorderNode) {
-        const tab = area.getSelectedNode() ?? area.getTabNodes()[0];
-        return this._currentDocument?.getElementById(domId("flexlayout-tabbutton-", tab.getId())) ?? undefined;
+    registerSplitter(node: RowNode | BorderNode, index: number, element: HTMLElement | null) {
+        const key = node.getId() + ":" + index;
+        if (element) {
+            this._splitters.set(key, element);
+        } else {
+            this._splitters.delete(key);
+        }
     }
 
-    // the Tab stops: each area's tab button, then the focusable elements of the border toolbars
-    private getAreaStops(): { element: HTMLElement; area?: TabSetNode | BorderNode }[] {
-        const stops: { element: HTMLElement; area?: TabSetNode | BorderNode }[] = [];
-        const areas = this.getNavigationAreas();
-        for (const area of areas) {
-            const element = this.getAreaTabButton(area);
+    // whether Tab stops on the area's tab; a tabset without a tab strip or without tabs is entered
+    // straight into its content instead
+    private hasAreaTab(area: TabSetNode | BorderNode) {
+        return area instanceof BorderNode || (area.isEnableTabStrip() && area.getTabNodes().length > 0);
+    }
+
+    // an area's focus stop: its shown tab (its first tab when a border is collapsed), else the
+    // first focusable element in its content, or the content itself
+    private getAreaStop(area: TabSetNode | BorderNode): HTMLElement | undefined {
+        if (this.hasAreaTab(area)) {
+            const tab = area.getSelectedNode() ?? area.getTabNodes()[0];
+            return this._currentDocument?.getElementById(domId("flexlayout-tabbutton-", tab.getId())) ?? undefined;
+        }
+        const content = this.getAreaContent(area);
+        return content && (getTabbableElements(content)[0] ?? content);
+    }
+
+    // an area's content: its shown tab's panel, or an empty tabset's placeholder content
+    private getAreaContent(area: TabSetNode | BorderNode): HTMLElement | undefined {
+        const selected = area.getSelectedNode();
+        if (selected) {
+            return this._currentDocument?.getElementById(domId("flexlayout-tab-", selected.getId())) ?? undefined;
+        }
+        return area instanceof TabSetNode && area.getTabNodes().length === 0 ? this._measurables.get("tabsetcontent:" + area.getId())?.element : undefined;
+    }
+
+    // where the element is within the area: in its content, or in its tab strip or toolbar
+    private getAreaPart(area: TabSetNode | BorderNode, element: Element): "content" | "header" | undefined {
+        if (this.getAreaContent(area)?.contains(element)) {
+            return "content";
+        }
+        if (this._measurables.get((area instanceof BorderNode ? "borderheader:" : "tabset:") + area.getId())?.element.contains(element)) {
+            return "header";
+        }
+        return undefined;
+    }
+
+    // the Tab stops in layout order: each area's stop, with the splitters between the areas they
+    // separate (a border's splitter comes before the border), then the focusable elements of the
+    // toolbar of every shown border, including borders without tabs
+    private getAreaStops(): IAreaStop[] {
+        const stops: IAreaStop[] = [];
+        const model = this._props.model;
+        const maximized = model.getMaximizedTabset(this._layoutId);
+        const pushArea = (area: TabSetNode | BorderNode) => {
+            const element = this.getAreaStop(area);
             if (element) {
                 stops.push({ element, area });
             }
+        };
+        const pushSplitter = (node: RowNode | BorderNode, index: number) => {
+            const element = this._splitters.get(node.getId() + ":" + index);
+            if (element) {
+                stops.push({ element });
+            }
+        };
+        const visitRow = (row: RowNode) => {
+            row.getChildren().forEach((child, index) => {
+                if (index > 0 && maximized === undefined) {
+                    pushSplitter(row, index);
+                }
+                if (child instanceof RowNode) {
+                    visitRow(child);
+                } else if (child instanceof TabSetNode && this.isNavigationTabset(child, maximized)) {
+                    pushArea(child);
+                }
+            });
+        };
+        const rootRow = model.getRootRow(this._layoutId);
+        if (rootRow) {
+            visitRow(rootRow);
         }
-        for (const area of areas) {
-            const toolbar =
-                area instanceof BorderNode
-                    ? this._measurables.get("borderheader:" + area.getId())?.element.querySelector<HTMLElement>("." + this.getClassName(CLASSES.FLEXLAYOUT__BORDER_TOOLBAR))
-                    : null;
-            if (toolbar) {
-                stops.push(...getTabbableElements(toolbar).map((element) => ({ element })));
+        if (this.isMainLayout()) {
+            const borders = model.getBorderSet().getBorders();
+            for (const border of borders) {
+                if (this.isNavigationBorder(border)) {
+                    pushSplitter(border, 0);
+                    pushArea(border);
+                }
+            }
+            for (const border of borders) {
+                const toolbar = this._measurables.get("borderheader:" + border.getId())?.element.querySelector<HTMLElement>("." + this.getClassName(CLASSES.FLEXLAYOUT__BORDER_TOOLBAR));
+                if (toolbar) {
+                    stops.push(...getTabbableElements(toolbar).map((element) => ({ element })));
+                }
             }
         }
         return stops;
     }
 
-    // the stop holding the element: a toolbar stop, an area's tab strip or toolbar, or its shown tab's content
-    private findAreaStop(stops: { element: HTMLElement; area?: TabSetNode | BorderNode }[], element: Element): { index: number; inContent: boolean } | undefined {
-        const toolbarIndex = stops.findIndex((stop) => stop.area === undefined && stop.element.contains(element));
-        if (toolbarIndex !== -1) {
-            return { index: toolbarIndex, inContent: false };
+    // the stop holding the element: a splitter or toolbar stop, else the area whose content, tab
+    // strip or toolbar holds it
+    private findAreaStop(stops: IAreaStop[], element: Element): { index: number; inContent: boolean } | undefined {
+        const elementIndex = stops.findIndex((stop) => stop.area === undefined && stop.element.contains(element));
+        if (elementIndex !== -1) {
+            return { index: elementIndex, inContent: false };
         }
-        for (let index = 0; index < stops.length && stops[index].area !== undefined; index++) {
-            const area = stops[index].area!;
-            if (this._measurables.get((area instanceof BorderNode ? "borderheader:" : "tabset:") + area.getId())?.element.contains(element)) {
-                return { index, inContent: false };
-            }
-            const panel = this.getAreaPanel(area);
-            if (panel?.contains(element)) {
-                return { index, inContent: true };
+        for (let index = 0; index < stops.length; index++) {
+            const area = stops[index].area;
+            const part = area && this.getAreaPart(area, element);
+            if (part !== undefined) {
+                return { index, inContent: part === "content" };
             }
         }
         return undefined;
-    }
-
-    private getAreaPanel(area: TabSetNode | BorderNode) {
-        const selected = area.getSelectedNode();
-        return selected ? this._currentDocument?.getElementById(domId("flexlayout-tab-", selected.getId())) : undefined;
     }
 
     // Tab / Shift+Tab, the nextArea / previousArea keys and the exitArea key with tabNavigation "areas"
@@ -699,34 +807,39 @@ export class LayoutController {
             return;
         }
         const keyMap = this.getKeyMap();
-        const stops = this.getAreaStops();
-        const areaCount = stops.filter((stop) => stop.area !== undefined).length;
-        const position = this.findAreaStop(stops, active);
         const next = matchesKey(event, keyMap.nextArea);
+        const previous = matchesKey(event, keyMap.previousArea);
+        const exit = matchesKey(event, keyMap.exitArea);
+        if (event.key !== "Tab" && !next && !previous && !exit) {
+            return;
+        }
+        const stops = this.getAreaStops();
+        const position = this.findAreaStop(stops, active);
         let target: HTMLElement | undefined;
-        if (next || matchesKey(event, keyMap.previousArea)) {
-            if (areaCount === 0) {
+        if (next || previous) {
+            const areaIndexes = stops.flatMap((stop, index) => (stop.area !== undefined ? [index] : []));
+            if (areaIndexes.length === 0) {
                 return;
             }
             if (position === undefined) {
                 const current = this.getCurrentArea();
-                target = current && this.getAreaTabButton(current);
-            } else if (position.index < areaCount) {
-                target = stops[(position.index + (next ? 1 : -1) + areaCount) % areaCount].element;
+                target = current && this.getAreaStop(current);
             } else {
-                target = stops[next ? 0 : areaCount - 1].element;
+                const index = next ? (areaIndexes.find((i) => i > position.index) ?? areaIndexes[0]) : (areaIndexes.findLast((i) => i < position.index) ?? areaIndexes[areaIndexes.length - 1]);
+                target = stops[index].element;
             }
         } else if (position === undefined) {
             return;
         } else if (event.key === "Tab" && !event.ctrlKey && !event.altKey && !event.metaKey) {
             const backward = event.shiftKey;
-            if (position.inContent) {
+            const area = stops[position.index].area;
+            if (position.inContent && area !== undefined) {
                 // within the content Tab moves as usual until it would leave the content
                 const direction = backward ? globalThis.Node.DOCUMENT_POSITION_PRECEDING : globalThis.Node.DOCUMENT_POSITION_FOLLOWING;
-                if (getTabbableElements(this.getAreaPanel(stops[position.index].area!)!).some((element) => element !== active && active.compareDocumentPosition(element) & direction)) {
+                if (getTabbableElements(this.getAreaContent(area)!).some((element) => element !== active && active.compareDocumentPosition(element) & direction)) {
                     return;
                 }
-                target = backward ? stops[position.index].element : stops[position.index + 1]?.element;
+                target = backward && this.hasAreaTab(area) ? stops[position.index].element : stops[position.index + (backward ? -1 : 1)]?.element;
             } else {
                 target = stops[position.index + (backward ? -1 : 1)]?.element;
             }
@@ -736,7 +849,7 @@ export class LayoutController {
                 this._areaSentinels[backward ? 0 : 1]?.focus();
                 return;
             }
-        } else if (position.inContent && matchesKey(event, keyMap.exitArea)) {
+        } else if (exit && position.inContent && this.hasAreaTab(stops[position.index].area!)) {
             target = stops[position.index].element;
         }
         if (target) {
@@ -747,7 +860,7 @@ export class LayoutController {
 
     // notes a Tab key press (in the capture phase, wherever focus is) for onAreaFocusIn
     onAreaTabKeyDown = (event: KeyboardEvent) => {
-        if (event.key === "Tab") {
+        if (event.key === "Tab" && this.isAreaNavigation()) {
             this._areaTabPending = true;
             this._currentWindow?.setTimeout(() => {
                 this._areaTabPending = false;
@@ -755,7 +868,7 @@ export class LayoutController {
         }
     };
 
-    // Tab entering the layout from outside lands on the current area's tab; any focus within an
+    // Tab entering the layout from outside lands on the current area's stop; any focus within an
     // area makes it the current area
     onAreaFocusIn = (event: FocusEvent) => {
         const root = this.getRootDiv();
@@ -766,11 +879,15 @@ export class LayoutController {
         const from = event.relatedTarget as Element | null;
         if (this._areaTabPending && !root.contains(from)) {
             const current = this.getCurrentArea();
-            const entry = current && this.getAreaTabButton(current);
+            const entry = current && this.getAreaStop(current);
             if (entry && entry !== target) {
                 entry.focus();
                 return;
             }
+        }
+        const current = this._props.model.getNodeById(this._currentAreaId ?? "");
+        if ((current instanceof TabSetNode || current instanceof BorderNode) && this.getAreaPart(current, target) !== undefined) {
+            return; // focus stays within the current area
         }
         const stops = this.getAreaStops();
         const position = this.findAreaStop(stops, target);
@@ -1201,7 +1318,7 @@ export class LayoutController {
         main._props.onTabSelectionChange?.(ids);
     }
 
-    // the tab ranges start from: the last clicked tab, else the shown tab of the active tabset
+    // the tab ranges start from: the last clicked or activated tab, else the shown tab of the active tabset
     private getTabSelectionAnchor(tabNode: TabNode): TabNode | undefined {
         const anchor = this._props.model.getNodeById(this._mainController!._tabSelectionAnchorId ?? "");
         if (anchor instanceof TabNode) {
@@ -1235,20 +1352,32 @@ export class LayoutController {
             return true;
         }
         if (toggle) {
-            if (selected.length === 0) {
-                const anchor = this.getTabSelectionAnchor(tabNode);
-                this.setSelectedTabIds(anchor ? [anchor.getId(), tabNode.getId()] : []);
-            } else if (selected.includes(tabNode.getId())) {
-                this.setSelectedTabIds(selected.filter((id) => id !== tabNode.getId()));
-            } else {
-                this.setSelectedTabIds([...selected, tabNode.getId()]);
-            }
-            main._tabSelectionAnchorId = tabNode.getId();
+            this.toggleTabSelection(tabNode);
             return true;
         }
         main._tabSelectionAnchorId = tabNode.getId();
         this.setSelectedTabIds([]);
         return false;
+    }
+
+    // adds the tab to the tab selection or removes it; with no selection it pairs the tab with the
+    // anchor (the last clicked or activated tab), and the tab becomes the anchor either way
+    toggleTabSelection(tabNode: TabNode) {
+        const selected = this.getSelectedTabIds();
+        if (selected.length === 0) {
+            const anchor = this.getTabSelectionAnchor(tabNode);
+            this.setSelectedTabIds(anchor ? [anchor.getId(), tabNode.getId()] : []);
+        } else if (selected.includes(tabNode.getId())) {
+            this.setSelectedTabIds(selected.filter((id) => id !== tabNode.getId()));
+        } else {
+            this.setSelectedTabIds([...selected, tabNode.getId()]);
+        }
+        this.setTabSelectionAnchor(tabNode);
+    }
+
+    // makes the tab the one ranges and the first toggle start from, as a click on it does
+    setTabSelectionAnchor(tabNode: TabNode) {
+        this._mainController!._tabSelectionAnchorId = tabNode.getId();
     }
 
     // extends the tab selection from the anchor (or the given tab) to its neighbour in the given
@@ -1275,8 +1404,9 @@ export class LayoutController {
         }
     };
 
+    // the clearTabSelection key, pressed within the layout
     onTabSelectionKeyDown = (event: KeyboardEvent) => {
-        if (!event.defaultPrevented && matchesKey(event, this.getKeyMap().clearTabSelection)) {
+        if (!event.defaultPrevented && matchesKey(event, this.getKeyMap().clearTabSelection) && this.getRootDiv()?.contains(event.target as globalThis.Node)) {
             this.setSelectedTabIds([]);
         }
     };
@@ -1286,7 +1416,7 @@ export class LayoutController {
     }
 
     getTabDragSpeed() {
-        return this._props.tabDragSpeed ? this._props.tabDragSpeed : 0.3;
+        return this._props.tabDragSpeed ?? 0.3;
     }
 
     onCloseLayout = (layout: ModelLayout) => {
