@@ -1,11 +1,11 @@
 {
-  "name": "flexlayout-react",
-  "version": "0.11.1",
-  "description": "A multi-tab docking layout manager",
+  "name": "@dio.la/flexlayout-react",
+  "version": "0.11.1-dio.0",
+  "description": "A multi-tab docking layout manager (dio.la fork of flexlayout-react)",
   "author": "Caplin Systems Ltd",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/caplin/FlexLayout.git"
+    "url": "git+https://github.com/DaniGuardiola/FlexLayout.git"
   },
   "license": "MIT",
   "type": "module",
@@ -134,5 +134,8 @@
     "typescript-eslint": "^8.70.1",
     "vite": "^8.3.1",
     "vitest": "^4.1.11"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

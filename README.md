@@ -1,3 +1,5 @@
+> **dio.la fork.** Published as `@dio.la/flexlayout-react`, with features [lol.mortgage](https://lol.mortgage) needs on top of [caplin/FlexLayout](https://github.com/caplin/FlexLayout). The `dio` branch holds them, rebased on upstream releases; `master` mirrors upstream.
+
 # FlexLayout
 
 [![GitHub](https://img.shields.io/github/license/Caplin/FlexLayout)](https://github.com/caplin/FlexLayout/blob/master/LICENSE)
