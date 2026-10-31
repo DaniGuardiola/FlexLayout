@@ -26,6 +26,7 @@ export const BorderButton = (props: IBorderButtonProps) => {
     const selfRef = React.useRef<HTMLDivElement>(null);
     const contentRef = React.useRef<HTMLInputElement>(null);
     const keyMap = controller.getKeyMap();
+    const areaNavigation = controller.isAreaNavigation();
 
     const onDragStart = (event: React.DragEvent<HTMLElement>) => {
         if (tabNode.isEnableDrag()) {
@@ -74,6 +75,11 @@ export const BorderButton = (props: IBorderButtonProps) => {
         }
     };
 
+    const focusEdgeTab = (last: boolean) => {
+        const tabElements = Array.from(selfRef.current?.closest('[role="tablist"]')?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []);
+        tabElements[last ? tabElements.length - 1 : 0]?.focus();
+    };
+
     // focus the first focusable element in the tab content, or the panel
     const focusTabContent = () => {
         const doc = selfRef.current!.ownerDocument;
@@ -101,6 +107,12 @@ export const BorderButton = (props: IBorderButtonProps) => {
             event.preventDefault();
         } else if (matchesKey(event, keyMap.extendTabSelectionNext)) {
             extendTabSelection(1);
+            event.preventDefault();
+        } else if (areaNavigation && matchesKey(event, keyMap.enterArea)) {
+            focusTabContent();
+            event.preventDefault();
+        } else if (areaNavigation && (event.key === "Home" || event.key === "End") && !hasModifier(event)) {
+            focusEdgeTab(event.key === "End");
             event.preventDefault();
         } else if (event.key === "Enter" || event.key === " ") {
             onClick();
@@ -279,6 +291,7 @@ export const BorderButton = (props: IBorderButtonProps) => {
     const ariaKeyshortcuts =
         [
             toAriaKeyShortcuts(keyMap.focusTabToggle),
+            areaNavigation ? toAriaKeyShortcuts(keyMap.enterArea) : undefined,
             tabNode.isCloseable() ? toAriaKeyShortcuts(keyMap.closeTab) : undefined,
             toAriaKeyShortcuts(keyMap.toggleTabSelection),
             toAriaKeyShortcuts(keyMap.extendTabSelectionPrevious),
@@ -303,7 +316,7 @@ export const BorderButton = (props: IBorderButtonProps) => {
             // explicit name to exclude the close button from the accessible name
             aria-label={editing ? undefined : renderState.name}
             aria-keyshortcuts={editing ? undefined : ariaKeyshortcuts}
-            tabIndex={editing ? -1 : isTabbable() ? 0 : -1}
+            tabIndex={editing ? -1 : isTabbable() && controller.isAreaTabStop(tabNode.getTabContainer()) ? 0 : -1}
             onKeyDown={onKeyDown}
             data-layout-path={path}
             className={classNames}

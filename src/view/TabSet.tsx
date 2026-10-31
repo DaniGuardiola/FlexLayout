@@ -461,7 +461,8 @@ export const TabSet = (props: ITabSetProps) => {
 
         // tabset cycling shortcuts on the tablist
         const keyMap = controller.getKeyMap();
-        const tablistKeyshortcuts = [toAriaKeyShortcuts(keyMap.focusNextTabset), toAriaKeyShortcuts(keyMap.focusPreviousTabset)].filter(Boolean).join(" ") || undefined;
+        const areaKeys = controller.isAreaNavigation() ? [keyMap.nextArea, keyMap.previousArea] : [];
+        const tablistKeyshortcuts = [keyMap.focusNextTabset, keyMap.focusPreviousTabset, ...areaKeys].map(toAriaKeyShortcuts).filter(Boolean).join(" ") || undefined;
 
         // drop tablist role during rename
         const editingHere = controller.getEditingTab()?.getParent() === tabsetNode;

@@ -74,6 +74,12 @@ export const wrapContextMenuItems = (items: PopupMenuEntry[]): PopupMenuEntry[] 
 /** factory components used only by the test layouts and the tests that create tabs imperatively */
 export const TEST_FACTORY: Record<string, (node: TabNode) => React.ReactNode> = {
     testing: (node) => <div className="tab_content">{node.getName()}</div>,
+    form: (node) => (
+        <div className="tab_content">
+            <input aria-label={node.getName() + " field"} />
+            <button>{node.getName() + " button"}</button>
+        </div>
+    ),
     iframe: (node) => {
         // used by the iframe state-preservation e2e test: the srcDoc stamps a unique id on each
         // (re)load onto document.body, so a test can tell whether the iframe was reloaded when
@@ -89,6 +95,8 @@ export const testOnRenderTab = (node: TabNode, renderValues: ITabRenderValues): 
         renderValues.leading = <img src="images/settings.svg" key="1" alt="" style={{ width: "1em", height: "1em" }} />;
         renderValues.content = "onRenderTab1";
         renderValues.buttons.push(<img src="images/folder.svg" key="1" alt="" style={{ width: "1em", height: "1em" }} />);
+    } else if (node.getId() === "area_app_button") {
+        renderValues.buttons.push(<button key="app">App action</button>);
     } else if (node.getId() === "onRenderTab2") {
         renderValues.leading = <img src="images/settings.svg" key="1" alt="" style={{ width: "1em", height: "1em" }} />;
         renderValues.content = "onRenderTab2";
@@ -132,6 +140,9 @@ export const testOnRenderTabSet = (node: TabSetNode | BorderNode, renderValues: 
                 HELLO
             </div>,
         );
+    } else if (node instanceof BorderNode && node.getConfig()?.areaToolbar) {
+        renderValues.buttons.push(<button key="add">Add panel</button>);
+        renderValues.buttons.push(<button key="layout">Layout</button>);
     } else if (node instanceof BorderNode) {
         renderValues.buttons.push(<img src="images/folder.svg" key="1" alt="" style={{ width: "1em", height: "1em" }} />);
         renderValues.buttons.push(<img src="images/settings.svg" key="2" alt="" style={{ width: "1em", height: "1em" }} />);

@@ -1,0 +1,48 @@
+{
+  "global": { "tabEnableRename": true },
+  "borders": [
+    {
+      "type": "border",
+      "location": "bottom",
+      "config": { "areaToolbar": true },
+      "children": [
+        { "type": "tab", "name": "Log", "component": "form" },
+        { "type": "tab", "name": "Notes", "component": "testing" }
+      ]
+    }
+  ],
+  "layout": {
+    "type": "row",
+    "weight": 100,
+    "children": [
+      {
+        "type": "tabset",
+        "weight": 50,
+        "children": [
+          { "type": "tab", "name": "Form A", "component": "form" },
+          { "type": "tab", "name": "Plain A", "component": "testing" },
+          { "type": "tab", "name": "Third A", "component": "testing" }
+        ]
+      },
+      {
+        "type": "row",
+        "weight": 50,
+        "children": [
+          {
+            "type": "tabset",
+            "weight": 50,
+            "children": [
+              { "type": "tab", "id": "form_b", "name": "Form B", "component": "form" },
+              { "type": "tab", "name": "Two B", "component": "testing" }
+            ]
+          },
+          {
+            "type": "tabset",
+            "weight": 50,
+            "children": [{ "type": "tab", "id": "area_app_button", "name": "Plain C", "component": "testing" }]
+          }
+        ]
+      }
+    ]
+  }
+}

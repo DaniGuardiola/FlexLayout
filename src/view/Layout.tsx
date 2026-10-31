@@ -24,6 +24,14 @@ export interface ILayoutProps {
      * disable that shortcut. The configured bindings are advertised to assistive technology via
      * aria-keyshortcuts */
     keyMap?: IKeyMap;
+    /** how Tab moves focus through the layout. "dom" (the default) follows the document order of
+     * every focusable element. "areas" moves between areas instead: Tab / Shift+Tab go from the
+     * shown tab of one tabset or border to the next (tabsets in layout order, then borders, then
+     * the focusable elements of the border toolbars), skipping tab content and toolbar buttons;
+     * Enter moves into a tab's content, Tab past its last focusable element goes on to the next
+     * area, and Escape returns to the tab. The area keys are configured via keyMap (nextArea,
+     * previousArea, enterArea, exitArea) */
+    tabNavigation?: "dom" | "areas";
     /** Custom icons for close, pin, maximize, restore, more, popout buttons. */
     icons?: IIcons;
     /** function called whenever the layout generates an action to update the model (allows for intercepting actions before they are dispatched to the model, for example, asking the user to confirm a tab close.) Returning undefined from the function will halt the action, otherwise return the action to continue */

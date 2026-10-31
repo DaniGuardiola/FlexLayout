@@ -95,11 +95,16 @@ export function toAriaKeyShortcuts(spec: string | undefined) {
 /** @internal */
 export function focusFirstIn(container: HTMLElement | null) {
     if (container) {
-        const focusable = container.querySelector(
-            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        ) as HTMLElement | null;
-        (focusable ?? container).focus();
+        (getTabbableElements(container)[0] ?? container).focus();
     }
+}
+
+/** @internal the visible elements within the container that Tab moves through, in document order */
+export function getTabbableElements(container: HTMLElement): HTMLElement[] {
+    const elements = container.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+    return Array.from(elements).filter((element) => element.tabIndex >= 0 && (typeof element.checkVisibility !== "function" || element.checkVisibility()));
 }
 
 /** @internal */

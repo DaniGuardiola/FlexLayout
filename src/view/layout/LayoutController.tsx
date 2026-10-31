@@ -18,7 +18,7 @@ import { TabSetNode } from "../../model/TabSetNode";
 import { AsterickIcon, GripIcon, CloseIcon, EdgeIcon, MaximizeIcon, OverflowIcon, PinIcon, PopoutIcon, PopoutFloatIcon, RestoreIcon } from "../Icons";
 import { Row } from "../Row";
 import { Tab } from "../Tab";
-import { domId, enablePointerOnIFrames, isDesktop, matchesKey, resolveKeyMap, Utils_dragging } from "../Utils";
+import { domId, enablePointerOnIFrames, getTabbableElements, isDesktop, matchesKey, resolveKeyMap, Utils_dragging } from "../Utils";
 import { ModelLayout } from "../../model/ModelLayout";
 import { TabContentRenderer } from "../TabContentRenderer";
 import { DragDropManager } from "./DragDropManager";
@@ -94,6 +94,11 @@ export class LayoutController {
     // from, held by the main controller for all its layouts
     private _selectedTabIds: string[] = [];
     private _tabSelectionAnchorId: string | undefined = undefined;
+    // tabNavigation "areas": the area that last held focus (entered by Tab from outside the layout),
+    // the elements at both ends of the layout that Tab leaves from, and whether a Tab key is moving focus
+    private _currentAreaId: string | undefined = undefined;
+    private _areaSentinels: (HTMLElement | null)[] = [null, null];
+    private _areaTabPending: boolean = false;
 
     constructor(
         props: ILayoutInternalProps,
@@ -593,6 +598,188 @@ export class LayoutController {
         this.doAction(Actions.setActiveTabset(target.getId(), this._layoutId));
         return true;
     }
+
+    // with tabNavigation "areas", the main layout and popout windows move focus between areas with Tab
+    isAreaNavigation() {
+        return this._props.tabNavigation === "areas" && (this.isMainLayout() || this._layout.getType() === "window");
+    }
+
+    // the areas in navigation order: the tabsets showing a tab strip in layout tree order (rows lay
+    // out their children left to right or top to bottom, so this is the visual reading order; only
+    // the maximized tabset while one is maximized), then the borders with tabs in model order
+    getNavigationAreas(): (TabSetNode | BorderNode)[] {
+        const areas: (TabSetNode | BorderNode)[] = [];
+        const maximized = this._props.model.getMaximizedTabset(this._layoutId);
+        this._props.model.visitLayoutNodes(this._layoutId, (node) => {
+            if (node instanceof TabSetNode && node.isEnableTabStrip() && node.getTabNodes().length > 0 && (maximized === undefined || node === maximized)) {
+                areas.push(node);
+            }
+        });
+        if (this.isMainLayout()) {
+            for (const border of this._props.model.getBorderSet().getBorders()) {
+                if (border.isShowing() && border.getTabNodes().length > 0) {
+                    areas.push(border);
+                }
+            }
+        }
+        return areas;
+    }
+
+    // the area whose tab Tab enters the layout on: the one that last held focus, else the first
+    getCurrentArea(): TabSetNode | BorderNode | undefined {
+        const areas = this.getNavigationAreas();
+        return areas.find((area) => area.getId() === this._currentAreaId) ?? areas[0];
+    }
+
+    // only the current area's tab is in the Tab sequence; without area navigation every area's is
+    isAreaTabStop(area: TabSetNode | BorderNode) {
+        return !this.isAreaNavigation() || this.getCurrentArea() === area;
+    }
+
+    setAreaSentinel(index: number, element: HTMLElement | null) {
+        this._areaSentinels[index] = element;
+    }
+
+    // an area's focus stop: its shown tab, or its first tab when a border is collapsed
+    private getAreaTabButton(area: TabSetNode | BorderNode) {
+        const tab = area.getSelectedNode() ?? area.getTabNodes()[0];
+        return this._currentDocument?.getElementById(domId("flexlayout-tabbutton-", tab.getId())) ?? undefined;
+    }
+
+    // the Tab stops: each area's tab button, then the focusable elements of the border toolbars
+    private getAreaStops(): { element: HTMLElement; area?: TabSetNode | BorderNode }[] {
+        const stops: { element: HTMLElement; area?: TabSetNode | BorderNode }[] = [];
+        const areas = this.getNavigationAreas();
+        for (const area of areas) {
+            const element = this.getAreaTabButton(area);
+            if (element) {
+                stops.push({ element, area });
+            }
+        }
+        for (const area of areas) {
+            const toolbar =
+                area instanceof BorderNode
+                    ? this._measurables.get("borderheader:" + area.getId())?.element.querySelector<HTMLElement>("." + this.getClassName(CLASSES.FLEXLAYOUT__BORDER_TOOLBAR))
+                    : null;
+            if (toolbar) {
+                stops.push(...getTabbableElements(toolbar).map((element) => ({ element })));
+            }
+        }
+        return stops;
+    }
+
+    // the stop holding the element: a toolbar stop, an area's tab strip or toolbar, or its shown tab's content
+    private findAreaStop(stops: { element: HTMLElement; area?: TabSetNode | BorderNode }[], element: Element): { index: number; inContent: boolean } | undefined {
+        const toolbarIndex = stops.findIndex((stop) => stop.area === undefined && stop.element.contains(element));
+        if (toolbarIndex !== -1) {
+            return { index: toolbarIndex, inContent: false };
+        }
+        for (let index = 0; index < stops.length && stops[index].area !== undefined; index++) {
+            const area = stops[index].area!;
+            if (this._measurables.get((area instanceof BorderNode ? "borderheader:" : "tabset:") + area.getId())?.element.contains(element)) {
+                return { index, inContent: false };
+            }
+            const panel = this.getAreaPanel(area);
+            if (panel?.contains(element)) {
+                return { index, inContent: true };
+            }
+        }
+        return undefined;
+    }
+
+    private getAreaPanel(area: TabSetNode | BorderNode) {
+        const selected = area.getSelectedNode();
+        return selected ? this._currentDocument?.getElementById(domId("flexlayout-tab-", selected.getId())) : undefined;
+    }
+
+    // Tab / Shift+Tab, the nextArea / previousArea keys and the exitArea key with tabNavigation "areas"
+    onAreaKeyDown = (event: KeyboardEvent) => {
+        const active = this._currentDocument?.activeElement;
+        if (event.defaultPrevented || !this.isAreaNavigation() || !active || !this.getRootDiv()?.contains(active) || this.getEditingTab() !== undefined) {
+            return;
+        }
+        const keyMap = this.getKeyMap();
+        const stops = this.getAreaStops();
+        const areaCount = stops.filter((stop) => stop.area !== undefined).length;
+        const position = this.findAreaStop(stops, active);
+        const next = matchesKey(event, keyMap.nextArea);
+        let target: HTMLElement | undefined;
+        if (next || matchesKey(event, keyMap.previousArea)) {
+            if (areaCount === 0) {
+                return;
+            }
+            if (position === undefined) {
+                const current = this.getCurrentArea();
+                target = current && this.getAreaTabButton(current);
+            } else if (position.index < areaCount) {
+                target = stops[(position.index + (next ? 1 : -1) + areaCount) % areaCount].element;
+            } else {
+                target = stops[next ? 0 : areaCount - 1].element;
+            }
+        } else if (position === undefined) {
+            return;
+        } else if (event.key === "Tab" && !event.ctrlKey && !event.altKey && !event.metaKey) {
+            const backward = event.shiftKey;
+            if (position.inContent) {
+                // within the content Tab moves as usual until it would leave the content
+                const direction = backward ? globalThis.Node.DOCUMENT_POSITION_PRECEDING : globalThis.Node.DOCUMENT_POSITION_FOLLOWING;
+                if (getTabbableElements(this.getAreaPanel(stops[position.index].area!)!).some((element) => element !== active && active.compareDocumentPosition(element) & direction)) {
+                    return;
+                }
+                target = backward ? stops[position.index].element : stops[position.index + 1]?.element;
+            } else {
+                target = stops[position.index + (backward ? -1 : 1)]?.element;
+            }
+            if (target === undefined) {
+                // past the first or last stop: from the sentinel at that end of the layout the
+                // browser moves focus on to the element before or after the layout
+                this._areaSentinels[backward ? 0 : 1]?.focus();
+                return;
+            }
+        } else if (position.inContent && matchesKey(event, keyMap.exitArea)) {
+            target = stops[position.index].element;
+        }
+        if (target) {
+            target.focus();
+            event.preventDefault();
+        }
+    };
+
+    // notes a Tab key press (in the capture phase, wherever focus is) for onAreaFocusIn
+    onAreaTabKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Tab") {
+            this._areaTabPending = true;
+            this._currentWindow?.setTimeout(() => {
+                this._areaTabPending = false;
+            });
+        }
+    };
+
+    // Tab entering the layout from outside lands on the current area's tab; any focus within an
+    // area makes it the current area
+    onAreaFocusIn = (event: FocusEvent) => {
+        const root = this.getRootDiv();
+        const target = event.target as Element;
+        if (!this.isAreaNavigation() || !root?.contains(target) || this._areaSentinels.includes(target as HTMLElement)) {
+            return;
+        }
+        const from = event.relatedTarget as Element | null;
+        if (this._areaTabPending && !root.contains(from)) {
+            const current = this.getCurrentArea();
+            const entry = current && this.getAreaTabButton(current);
+            if (entry && entry !== target) {
+                entry.focus();
+                return;
+            }
+        }
+        const stops = this.getAreaStops();
+        const position = this.findAreaStop(stops, target);
+        const area = position && stops[position.index].area;
+        if (area && area.getId() !== this._currentAreaId) {
+            this._currentAreaId = area.getId();
+            this.redrawLayout();
+        }
+    };
 
     // components register the elements whose geometry feeds the model (measured centrally in syncLayoutMetrics)
     registerMeasurable(node: Node, kind: MeasurableKind, element: HTMLElement | null) {

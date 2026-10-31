@@ -164,6 +164,9 @@ export const LayoutInternal = React.forwardRef<LayoutController, ILayoutInternal
         if (controller.isMainLayout() || controller.getLayout()?.getType() === "window") {
             currentDocument.addEventListener("keydown", controller.onTabsetNavKeyDown);
             currentDocument.addEventListener("keydown", controller.onTabSelectionKeyDown);
+            currentDocument.addEventListener("keydown", controller.onAreaKeyDown);
+            currentDocument.addEventListener("keydown", controller.onAreaTabKeyDown, true);
+            currentDocument.addEventListener("focusin", controller.onAreaFocusIn);
         }
 
         return () => {
@@ -175,6 +178,9 @@ export const LayoutInternal = React.forwardRef<LayoutController, ILayoutInternal
             currentDocument.removeEventListener("keydown", controller.onOverlayBorderKeyDown);
             currentDocument.removeEventListener("keydown", controller.onTabsetNavKeyDown);
             currentDocument.removeEventListener("keydown", controller.onTabSelectionKeyDown);
+            currentDocument.removeEventListener("keydown", controller.onAreaKeyDown);
+            currentDocument.removeEventListener("keydown", controller.onAreaTabKeyDown, true);
+            currentDocument.removeEventListener("focusin", controller.onAreaFocusIn);
         };
         // documentVersion re-runs when the element moves to another document
     }, [controller, documentVersion]);
@@ -284,6 +290,20 @@ export const LayoutInternal = React.forwardRef<LayoutController, ILayoutInternal
         moveablesHome = <div ref={moveablesHomeRef} key="__moveables_home__" className={controller.getClassName(CLASSES.FLEXLAYOUT__LAYOUT_MOVEABLES_HOME)}></div>;
     }
 
+    // with tabNavigation "areas", Tab past the first or last area leaves from these ends of the layout
+    const areaSentinels = controller.isAreaNavigation()
+        ? [0, 1].map((index) => (
+              <div
+                  key={"__area_sentinel_" + index + "__"}
+                  ref={(element) => controller.setAreaSentinel(index, element)}
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", outline: "none" }}
+                  data-layout-path={index === 0 ? "/area-start" : "/area-end"}
+              />
+          ))
+        : [null, null];
+
     return (
         <div
             ref={layoutRef}
@@ -294,6 +314,7 @@ export const LayoutInternal = React.forwardRef<LayoutController, ILayoutInternal
             onDrop={controller.getDragDropManager().onDrop}
             onPointerDown={controller.onLayoutPointerDown}
         >
+            {areaSentinels[0]}
             {metrics}
             {moveablesHome}
             {overlay}
@@ -302,6 +323,7 @@ export const LayoutInternal = React.forwardRef<LayoutController, ILayoutInternal
             {reorderedTabContents}
             {floatingWindows}
             {dragTabButtons}
+            {areaSentinels[1]}
         </div>
     );
 });

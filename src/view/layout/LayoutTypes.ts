@@ -86,6 +86,18 @@ export interface IKeyMap {
     toggleTabSelection?: string;
     /** clears the tab selection */
     clearTabSelection?: string;
+    /** with tabNavigation "areas": moves focus to the shown tab of the next area (wrapping), from
+     * anywhere within the layout including inside tab content */
+    nextArea?: string;
+    /** with tabNavigation "areas": moves focus to the shown tab of the previous area (wrapping),
+     * from anywhere within the layout including inside tab content */
+    previousArea?: string;
+    /** with tabNavigation "areas": on a tab button, shows its tab and moves focus to the first
+     * focusable element in the tab content, or to the content itself */
+    enterArea?: string;
+    /** with tabNavigation "areas": inside tab content, returns focus to the tab's button unless the
+     * content already handled the key */
+    exitArea?: string;
 }
 
 /** the default keyboard bindings, exported so applications can display or re-register them */
@@ -100,6 +112,10 @@ export const defaultKeyMap: Readonly<IKeyMap> = {
     extendTabSelectionNext: "Shift+ArrowRight",
     toggleTabSelection: "Mod+Enter",
     clearTabSelection: "Escape",
+    nextArea: "F6",
+    previousArea: "Shift+F6",
+    enterArea: "Enter",
+    exitArea: "Escape",
 };
 
 export interface IIcons {

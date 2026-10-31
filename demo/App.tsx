@@ -687,7 +687,8 @@ function App() {
                 onRenderDragRect={onRenderDragRect}
                 onExternalDrag={onExternalDrag}
                 realtimeResize={realtimeResize}
-                keyMap={{ focusTabToggle: "F6", focusNextTabset: "Ctrl+]", focusPreviousTabset: "Ctrl+[" }}
+                tabNavigation={layoutName === "test_area_navigation" ? "areas" : "dom"}
+                keyMap={{ focusTabToggle: layoutName === "test_area_navigation" ? undefined : "F6", focusNextTabset: "Ctrl+]", focusPreviousTabset: "Ctrl+[" }}
                 onContextMenu={
                     testing.isTestLayout(layoutName) || layoutName === "default" || layoutName === "simple" || layoutName === "groups" || layoutName === "otherfeatures" ? onContextMenu : undefined
                 }

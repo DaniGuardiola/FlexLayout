@@ -24,6 +24,7 @@ export const TabButton = (props: ITabButtonProps) => {
     const contentRef = React.useRef<HTMLInputElement>(null);
     const icons = controller.getIcons();
     const keyMap = controller.getKeyMap();
+    const areaNavigation = controller.isAreaNavigation();
     const editing = controller.getEditingTab() === tabNode;
 
     // callback ref: fires on attach/detach including remounts, unlike an effect
@@ -104,6 +105,11 @@ export const TabButton = (props: ITabButtonProps) => {
         }
     };
 
+    const focusEdgeTab = (last: boolean) => {
+        const tabElements = Array.from(selfRef.current?.closest('[role="tablist"]')?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []);
+        tabElements[last ? tabElements.length - 1 : 0]?.focus();
+    };
+
     // move focus into the tab content: the first focusable element, or the panel itself
     const focusTabContent = () => {
         const doc = selfRef.current!.ownerDocument;
@@ -131,6 +137,12 @@ export const TabButton = (props: ITabButtonProps) => {
             event.preventDefault();
         } else if (matchesKey(event, keyMap.extendTabSelectionNext)) {
             extendTabSelection(1);
+            event.preventDefault();
+        } else if (areaNavigation && matchesKey(event, keyMap.enterArea)) {
+            focusTabContent();
+            event.preventDefault();
+        } else if (areaNavigation && (event.key === "Home" || event.key === "End") && !hasModifier(event)) {
+            focusEdgeTab(event.key === "End");
             event.preventDefault();
         } else if (event.key === "Enter" || event.key === " ") {
             if (selected) {
@@ -245,12 +257,13 @@ export const TabButton = (props: ITabButtonProps) => {
     const renderState = getRenderStateEx(controller, tabNode);
 
     // keep exactly one tab stop in the tablist even when the tabset has no selected tab
-    const isTabbable = selected || (parentNode.getSelectedNode() === undefined && parentNode.getTabNodes()[0] === tabNode);
+    const isTabbable = (selected || (parentNode.getSelectedNode() === undefined && parentNode.getTabNodes()[0] === tabNode)) && controller.isAreaTabStop(parentNode);
 
     // aria-keyshortcuts from the resolved keymap
     const ariaKeyshortcuts =
         [
             toAriaKeyShortcuts(keyMap.focusTabToggle),
+            areaNavigation ? toAriaKeyShortcuts(keyMap.enterArea) : undefined,
             tabNode.isCloseable() ? toAriaKeyShortcuts(keyMap.closeTab) : undefined,
             tabNode.isEnableRename() ? toAriaKeyShortcuts(keyMap.renameTab) : undefined,
             toAriaKeyShortcuts(keyMap.toggleTabSelection),

@@ -30,7 +30,10 @@ export const Tab = (props: ITabProps) => {
     }, [tabNode, controller]);
 
     const parentNode = tabNode.getParent() as TabSetNode | BorderNode;
-    const focusToggleKey = controller.getKeyMap().focusTabToggle;
+    const keyMap = controller.getKeyMap();
+    const focusToggleKey = keyMap.focusTabToggle;
+    const areaKeys = controller.isAreaNavigation() ? [keyMap.exitArea, keyMap.nextArea, keyMap.previousArea] : [];
+    const ariaKeyshortcuts = [focusToggleKey, ...areaKeys].map(toAriaKeyShortcuts).filter(Boolean).join(" ") || undefined;
 
     // the configured key (pressed anywhere within the tab content) returns focus to the tab button
     const onKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
@@ -151,7 +154,7 @@ export const Tab = (props: ITabProps) => {
                 id={domId("flexlayout-tab-", tabNode.getId())}
                 role="tabpanel"
                 aria-labelledby={domId("flexlayout-tabbutton-", tabNode.getId())}
-                aria-keyshortcuts={toAriaKeyShortcuts(focusToggleKey)}
+                aria-keyshortcuts={ariaKeyshortcuts}
                 tabIndex={-1}
                 onKeyDown={focusToggleKey ? onKeyDown : undefined}
                 className={className}

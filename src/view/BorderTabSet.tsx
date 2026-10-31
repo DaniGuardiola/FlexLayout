@@ -14,7 +14,7 @@ import { I18nLabel } from "./I18nLabel";
 import { useTabOverflow } from "./TabOverflowHook";
 import { Orientation } from "../model/Orientation";
 import { CLASSES } from "../CSSClassNames";
-import { isAuxMouseEvent, tabButtonPath } from "./Utils";
+import { isAuxMouseEvent, tabButtonPath, toAriaKeyShortcuts } from "./Utils";
 
 /** @internal */
 export interface IBorderTabSetProps {
@@ -369,6 +369,12 @@ export const BorderTabSet = (props: IBorderTabSetProps) => {
         leadingContainer = <div className={cm(CLASSES.FLEXLAYOUT__BORDER_LEADING)}>{leading}</div>;
     }
 
+    const keyMap = controller.getKeyMap();
+    const areaKeyshortcuts =
+        controller.isAreaNavigation() && controller.getEditingTab()?.getParent() !== borderNode
+            ? [keyMap.nextArea, keyMap.previousArea].map(toAriaKeyShortcuts).filter(Boolean).join(" ") || undefined
+            : undefined;
+
     const tabContainerClassName =
         cm(CLASSES.FLEXLAYOUT__BORDER_INNER_TAB_CONTAINER) +
         " " +
@@ -406,6 +412,7 @@ export const BorderTabSet = (props: IBorderTabSetProps) => {
                                 ? "vertical"
                                 : undefined
                         }
+                        aria-keyshortcuts={areaKeyshortcuts}
                         className={tabContainerClassName}
                     >
                         {tabButtons}
