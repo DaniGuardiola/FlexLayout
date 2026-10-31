@@ -220,7 +220,7 @@ describe("tab selection", () => {
         fireEvent.click(button("/ts0/tb0"));
         fireEvent.keyDown(button("/border/left/tb1"), { key: " " });
         fireEvent.keyDown(button("/ts0/tb2"), { key: "Enter", ctrlKey: true });
-        expect(ref.current!.getSelectedTabIds()).toEqual(["b1", "t2"]);
+        expect(ref.current!.getSelectedTabIds()).toEqual(["t2", "b1"]);
         act(() => ref.current!.setSelectedTabIds([]));
         // the toggle key on the anchor itself selects nothing, then pairs with the next tab
         fireEvent.keyDown(button("/ts0/tb1"), { key: "Enter" });

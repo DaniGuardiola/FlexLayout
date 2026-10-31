@@ -280,15 +280,25 @@ export class Model {
         return undefined;
     }
 
-    /** @internal the given tabs without duplicates, in document order (layout order, then tabset order, then tab order) */
+    /** @internal the given tabs without duplicates, in document order: the main layout's tabsets in
+     *  layout order, then the borders in model order, then the other layouts by layout id (as area
+     *  navigation orders them, independent of the layouts map order), each in tab order */
     sortTabsInDocumentOrder(tabs: TabNode[]): TabNode[] {
         const wanted = new Set(tabs);
         const sorted: TabNode[] = [];
-        this.visitNodes((node) => {
+        const visit = (node: Node) => {
             if (node instanceof TabNode && wanted.has(node)) {
                 sorted.push(node);
             }
-        });
+        };
+        this.mainLayout.visitNodes(visit);
+        this.borders.forEachNode(visit);
+        const otherLayoutIds = Array.from(this.layouts.keys())
+            .filter((layoutId) => layoutId !== Model.MAIN_LAYOUT_ID)
+            .sort();
+        for (const layoutId of otherLayoutIds) {
+            this.layouts.get(layoutId)!.visitNodes(visit);
+        }
         return sorted;
     }
 

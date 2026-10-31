@@ -106,8 +106,9 @@ export class Actions {
     /**
      * Moves several tabs to one location in a single action (a single undo step and a single
      * onAction call). The tabs land together at the drop location in their current document
-     * order (layout order, then tabset order, then tab order), docking to a tabset or row edge
-     * moves them all into the one new tabset.
+     * order (the main layout's tabsets in layout order, then the borders, then other layouts by
+     * id, each in tab order), docking to a tabset or row edge moves them all into the one new
+     * tabset.
      * @param fromNodeIds the ids of the tab nodes to move, the first is the tab that becomes selected
      * @param toNodeId the id of the node to receive the moved tabs
      * @param location the location where the moved tabs will be added, one of the DockLocation enum values.

@@ -144,6 +144,22 @@ test.describe("tab multi-select", () => {
             ]);
     });
 
+    test("a selection of tabset and border tabs lands with the tabset tabs first", async ({ page }) => {
+        await load(page);
+        await findTabButton(page, "/border/left", 0).click();
+        await findTabButton(page, "/ts0", 1).click({ modifiers: ["ControlOrMeta"] });
+        await expect.poll(() => multiSelectedNames(page)).toEqual(["L1", "Two"]);
+
+        await drag(page, findTabButton(page, "/ts0", 1), findPath(page, "/ts1/t0"), Location.CENTER);
+
+        await expect
+            .poll(() => tabsetNames(page))
+            .toEqual([
+                ["One", "Three", "Four"],
+                ["Five", "Six", "Two", "L1"],
+            ]);
+    });
+
     test("Shift+Arrow keys extend the selection and Cmd/Ctrl+Enter toggles without showing the tab", async ({ page }) => {
         await load(page);
         await findTabButton(page, "/ts0", 0).click();

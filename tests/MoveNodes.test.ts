@@ -131,6 +131,28 @@ describe("Actions.moveNodes", () => {
         expect(selectedId("ts1")).toBe("b1");
     });
 
+    it("lands main layout tabs before border tabs", () => {
+        model.doAction(Actions.moveNodes(["b0", "t1"], "ts1", DockLocation.CENTER, -1));
+        expect(tabIds("ts1")).toEqual(["t4", "t5", "t1", "b0"]);
+        expect(selectedId("ts1")).toBe("b0");
+    });
+
+    it("lands the tabs of other layouts last, by layout id, whatever the layouts map order", () => {
+        model = Model.fromJson({
+            ...json,
+            subLayouts: {
+                w_popout: { type: "window", layout: { type: "row", children: [{ type: "tabset", children: [{ type: "tab", id: "w0", name: "W0" }] }] } },
+                f_float: { type: "float", layout: { type: "row", children: [{ type: "tabset", children: [{ type: "tab", id: "f0", name: "F0" }] }] } },
+            },
+        });
+        const sorted = () => model.sortTabsInDocumentOrder(["w0", "f0", "b1", "t2"].map(tab));
+        expect(sorted().map((t) => t.getId())).toEqual(["t2", "b1", "f0", "w0"]);
+        model.sortLayouts();
+        expect(sorted().map((t) => t.getId())).toEqual(["t2", "b1", "f0", "w0"]);
+        model.doAction(Actions.moveNodes(["w0", "f0", "b1", "t2"], "ts1", DockLocation.CENTER, -1));
+        expect(tabIds("ts1")).toEqual(["t4", "t5", "t2", "b1", "f0", "w0"]);
+    });
+
     it("moves grouped tabs out of their group like single moves", () => {
         model.doAction(Actions.addTabToNewGroup("t0", "Group"));
         model.doAction(Actions.moveNodes(["t0", "t5"], "ts0", DockLocation.CENTER, -1));

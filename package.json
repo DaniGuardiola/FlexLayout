@@ -1,6 +1,6 @@
 {
   "name": "@dio.la/flexlayout-react",
-  "version": "0.11.1-dio.2",
+  "version": "0.11.1-dio.3",
   "description": "A multi-tab docking layout manager (dio.la fork of flexlayout-react)",
   "author": "Caplin Systems Ltd",
   "repository": {

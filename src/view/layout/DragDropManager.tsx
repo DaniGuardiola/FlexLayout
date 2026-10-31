@@ -55,6 +55,15 @@ export class DragDropManager {
         return false;
     }
 
+    // a selection drag drops only where every dragged tab may go: the drop target was found for the
+    // grabbed tab, so the other tabs must pass the same checks, including the model's onAllowDrop
+    private canDropAllDragNodes(dropInfo: DropInfo) {
+        const dragState = DragDropManager.dragState!;
+        const target = dropInfo.node;
+        const layout = target.getLayout();
+        return (dragState.dragNodes ?? []).every((tab) => tab === dragState.dragNode || ((layout.isMainLayout() || layout.canDockTo(tab)) && target.canDockInto(tab, dropInfo)));
+    }
+
     addTabWithDragAndDrop(event: DragEvent, json: IJsonTabNode, onDrop?: (node?: Node, event?: React.DragEvent<HTMLElement>) => void) {
         const tempNode = TabNode.fromJson(json, this._controller.getModel(), false);
         DragDropManager.dragState = new DragState(this._controller.getMainController()!, DragSource.Add, tempNode, json, onDrop);
@@ -107,9 +116,14 @@ export class DragDropManager {
         if (node instanceof TabNode) {
             dragNodes = [node];
             if (this._controller.isTabMultiSelected(node)) {
+                // selected tabs that cannot be dragged stay where they are
                 const model = this._controller.getModel();
-                const others = this._controller.getSelectedTabIds().filter((id) => id !== node.getId());
-                dragNodes.push(...others.map((id) => model.getNodeById(id) as TabNode));
+                const others = this._controller
+                    .getSelectedTabIds()
+                    .filter((id) => id !== node.getId())
+                    .map((id) => model.getNodeById(id))
+                    .filter((other): other is TabNode => other instanceof TabNode && other.isEnableDrag());
+                dragNodes.push(...others);
             }
         }
         DragDropManager.dragState = new DragState(this._controller.getMainController()!, DragSource.Internal, node, undefined, undefined, false, undefined, undefined, dragNodes);
@@ -378,7 +392,7 @@ export class DragDropManager {
             }
 
             const dropInfo = this._controller.getModel().findDropTargetNode(this._controller.getLayoutId(), DragDropManager.dragState!.dragNode!, pos.x, pos.y, this.isExcludeCenter());
-            if (dropInfo) {
+            if (dropInfo && this.canDropAllDragNodes(dropInfo)) {
                 // a floating panel's layout can split a tabset or dock to a layout edge (the root
                 // row), never dock to the center or into a border
                 if (DragDropManager.dragState!.dockFloatToMain && (dropInfo.location === DockLocation.CENTER || (!(dropInfo.node instanceof TabSetNode) && !(dropInfo.node instanceof RowNode)))) {
