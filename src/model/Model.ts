@@ -172,6 +172,8 @@ export class Model {
                 return this.applyAddTab(action);
             case Actions.MOVE_NODE:
                 return this.applyMoveNode(action);
+            case Actions.MOVE_NODES:
+                return this.applyMoveNodes(action);
             case Actions.DELETE_TAB:
                 return this.applyDeleteTab(action);
             case Actions.DELETE_TABSET:
@@ -256,6 +258,38 @@ export class Model {
             }
         }
         return undefined;
+    }
+
+    /** @internal moves the tabs one by one through the single move logic: the first lands at the
+     *  drop location, each following one docks into the container of the previous one, right after it */
+    private applyMoveNodes(action: Action): any {
+        const fromNodeIds = action.data.fromNodes as string[];
+        const primary = this.idMap.get(fromNodeIds[0]);
+        const tabs = this.sortTabsInDocumentOrder(fromNodeIds.map((id) => this.idMap.get(id)).filter((node): node is TabNode => node instanceof TabNode));
+        let previous: TabNode | undefined = undefined;
+        for (const tab of tabs) {
+            const select = tab === primary ? action.data.select : false;
+            if (previous === undefined) {
+                this.applyMoveNode(Actions.moveNode(tab.getId(), action.data.toNode, DockLocation.getByName(action.data.location), action.data.index, select));
+            } else {
+                const container = previous.getParent()!;
+                this.applyMoveNode(Actions.moveNode(tab.getId(), container.getId(), DockLocation.CENTER, container.getChildren().indexOf(previous) + 1, select));
+            }
+            previous = tab;
+        }
+        return undefined;
+    }
+
+    /** @internal the given tabs without duplicates, in document order (layout order, then tabset order, then tab order) */
+    sortTabsInDocumentOrder(tabs: TabNode[]): TabNode[] {
+        const wanted = new Set(tabs);
+        const sorted: TabNode[] = [];
+        this.visitNodes((node) => {
+            if (node instanceof TabNode && wanted.has(node)) {
+                sorted.push(node);
+            }
+        });
+        return sorted;
     }
 
     /** @internal */

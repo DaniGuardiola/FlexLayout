@@ -119,6 +119,22 @@ describe("useUndo", () => {
         expect(result.current.model!.getNodeById("t3")).not.toBeUndefined();
     });
 
+    it("records a moveNodes action as a single undo step", () => {
+        const { result } = renderHook(() => useUndo(Model.fromJson(json)));
+
+        act(() => {
+            result.current.model!.doAction(Actions.moveNodes(["t1", "t2"], "ts2", DockLocation.RIGHT, -1));
+        });
+        expect(result.current.undoCount).toBe(1);
+        expect(result.current.model!.getNodeById("t1")!.getParent()).toBe(result.current.model!.getNodeById("t2")!.getParent());
+
+        act(() => {
+            result.current.undo();
+        });
+        expect(result.current.model!.getNodeById("t1")!.getParent()!.getId()).toBe("ts1");
+        expect(result.current.model!.getNodeById("t2")!.getParent()!.getId()).toBe("ts2");
+    });
+
     it("caps the undo buffer at maxBufferSize", () => {
         const { result } = renderHook(() => useUndo(Model.fromJson(json), { maxBufferSize: 2 }));
 

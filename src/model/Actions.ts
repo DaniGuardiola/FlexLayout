@@ -23,6 +23,7 @@ export class Actions {
     static SET_BORDER_TYPE = "FlexLayout_SetBorderType";
     static SELECT_TAB = "FlexLayout_SelectTab";
     static MOVE_NODE = "FlexLayout_MoveNode";
+    static MOVE_NODES = "FlexLayout_MoveNodes";
     static DELETE_TABSET = "FlexLayout_DeleteTabset";
     static SET_ACTIVE_TABSET = "FlexLayout_SetActiveTabset";
     static ADJUST_WEIGHTS = "FlexLayout_AdjustWeights";
@@ -95,6 +96,28 @@ export class Actions {
     static moveNode(fromNodeId: string, toNodeId: string, location: DockLocation, index: number, select?: boolean): Action {
         return new Action(Actions.MOVE_NODE, {
             fromNode: fromNodeId,
+            toNode: toNodeId,
+            location: location.getName(),
+            index,
+            select,
+        });
+    }
+
+    /**
+     * Moves several tabs to one location in a single action (a single undo step and a single
+     * onAction call). The tabs land together at the drop location in their current document
+     * order (layout order, then tabset order, then tab order), docking to a tabset or row edge
+     * moves them all into the one new tabset.
+     * @param fromNodeIds the ids of the tab nodes to move, the first is the tab that becomes selected
+     * @param toNodeId the id of the node to receive the moved tabs
+     * @param location the location where the moved tabs will be added, one of the DockLocation enum values.
+     * @param index for docking to the center this value is the index of the first moved tab, use -1 to add to the end.
+     * @param select (optional) whether to select the first tab in fromNodeIds in its new tabset, overriding autoSelectTab
+     * @returns {Action} the action
+     */
+    static moveNodes(fromNodeIds: string[], toNodeId: string, location: DockLocation, index: number, select?: boolean): Action {
+        return new Action(Actions.MOVE_NODES, {
+            fromNodes: fromNodeIds,
             toNode: toNodeId,
             location: location.getName(),
             index,
