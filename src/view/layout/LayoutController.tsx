@@ -1296,6 +1296,11 @@ export class LayoutController {
         return this._state.editingTab;
     }
 
+    // whether several tabs can be selected and dragged together (the opt-in tabSelection prop)
+    isTabSelection() {
+        return this._mainController!._props.tabSelection === true;
+    }
+
     getSelectedTabIds(): string[] {
         return this._mainController!._selectedTabIds;
     }
@@ -1304,12 +1309,13 @@ export class LayoutController {
         return this.getSelectedTabIds().includes(tabNode.getId());
     }
 
-    // replaces the tab selection; unknown ids are dropped and fewer than two tabs clear it
+    // replaces the tab selection; unknown ids are dropped, and fewer than two tabs or a layout
+    // without tabSelection clear it
     setSelectedTabIds(tabIds: string[]) {
         const main = this._mainController!;
         const model = this._props.model;
         const tabs = model.sortTabsInDocumentOrder(tabIds.map((id) => model.getNodeById(id)).filter((node): node is TabNode => node instanceof TabNode));
-        const ids = tabs.length > 1 ? tabs.map((tab) => tab.getId()) : [];
+        const ids = tabs.length > 1 && this.isTabSelection() ? tabs.map((tab) => tab.getId()) : [];
         if (ids.length === main._selectedTabIds.length && ids.every((id, i) => id === main._selectedTabIds[i])) {
             return;
         }
@@ -1337,6 +1343,9 @@ export class LayoutController {
     // updates the tab selection for a click on a tab button; returns true when the click was a
     // selection click (Cmd/Ctrl or Shift) that must not show the tab
     tabSelectionClick(tabNode: TabNode, event: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }): boolean {
+        if (!this.isTabSelection()) {
+            return false;
+        }
         const main = this._mainController!;
         const toggle = event.ctrlKey || event.metaKey;
         const selected = this.getSelectedTabIds();

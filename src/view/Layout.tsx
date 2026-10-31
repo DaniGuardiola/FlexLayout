@@ -33,6 +33,13 @@ export interface ILayoutProps {
      * a tab strip or without tabs is entered straight into its content. The area keys are
      * configured via keyMap (nextArea, previousArea, enterArea, exitArea) */
     tabNavigation?: "dom" | "areas";
+    /** boolean value, defaults to false. When true, several tabs can be selected and dragged
+     * together: Cmd/Ctrl click toggles a tab into the selection, Shift click selects a range
+     * within a tabset or border, and the keyMap bindings toggleTabSelection,
+     * extendTabSelectionPrevious, extendTabSelectionNext and clearTabSelection apply. When false
+     * the selection stays empty (setSelectedTabIds does nothing) and those clicks and keys act as
+     * plain ones. Actions.moveNodes works either way */
+    tabSelection?: boolean;
     /** Custom icons for close, pin, maximize, restore, more, popout buttons. */
     icons?: IIcons;
     /** function called whenever the layout generates an action to update the model (allows for intercepting actions before they are dispatched to the model, for example, asking the user to confirm a tab close.) Returning undefined from the function will halt the action, otherwise return the action to continue */
@@ -49,10 +56,10 @@ export interface ILayoutProps {
     ) => void;
     /** function called when model has changed */
     onModelChange?: (model: Model, action: Action) => void;
-    /** function called when the tab selection changes (the tabs picked with Cmd/Ctrl or Shift
-     * clicks to be moved together), with the selected tab ids in document order; an empty array
-     * means no selection. A selection always holds at least two tabs, it is view state that is
-     * not stored in the model */
+    /** function called when the tab selection changes (with tabSelection, the tabs picked with
+     * Cmd/Ctrl or Shift clicks to be moved together), with the selected tab ids in document order;
+     * an empty array means no selection. A selection always holds at least two tabs, it is view
+     * state that is not stored in the model */
     onTabSelectionChange?: (tabIds: string[]) => void;
     /** Handle external drag-and-drop onto the layout. Return undefined to reject. */
     onExternalDrag?: (event: React.DragEvent<HTMLElement>) =>
@@ -181,7 +188,8 @@ export interface ILayoutApi {
     getSelectedTabIds(): string[];
 
     /**
-     * Replaces the tab selection; unknown ids are ignored and fewer than two tabs clear it
+     * Replaces the tab selection; unknown ids are ignored and fewer than two tabs clear it. Does
+     * nothing unless the tabSelection prop is set
      * @param tabIds the ids of the tab nodes to select, pass an empty array to clear the selection
      */
     setSelectedTabIds(tabIds: string[]): void;

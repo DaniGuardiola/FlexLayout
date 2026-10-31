@@ -46,8 +46,8 @@ const renderLayout = (props: Partial<React.ComponentProps<typeof Layout>> = {}) 
     const model = Model.fromJson(json);
     const ref = React.createRef<ILayoutApi>();
     const onTabSelectionChange = vi.fn();
-    render(<Layout model={model} factory={factory} ref={ref} onTabSelectionChange={onTabSelectionChange} {...props} />);
-    return { model, ref, onTabSelectionChange };
+    const result = render(<Layout model={model} factory={factory} ref={ref} tabSelection={true} onTabSelectionChange={onTabSelectionChange} {...props} />);
+    return { model, ref, onTabSelectionChange, rerender: result.rerender };
 };
 
 const dataTransfer = () => ({ setData: vi.fn(), setDragImage: vi.fn(), effectAllowed: "", dropEffect: "" });
@@ -143,7 +143,7 @@ describe("tab selection", () => {
         render(
             <>
                 <input aria-label="outside" />
-                <Layout model={model} factory={factory} ref={ref} />
+                <Layout model={model} factory={factory} ref={ref} tabSelection={true} />
             </>,
         );
         act(() => ref.current!.setSelectedTabIds(["t0", "t1"]));
@@ -161,7 +161,7 @@ describe("tab selection", () => {
             const result = useUndo(() => Model.fromJson(json));
             undo = result.undo;
             current = result.model;
-            return <Layout model={result.model!} factory={factory} ref={ref} onTabSelectionChange={onTabSelectionChange} />;
+            return <Layout model={result.model!} factory={factory} ref={ref} tabSelection={true} onTabSelectionChange={onTabSelectionChange} />;
         };
         render(<App />);
         act(() => {
@@ -252,6 +252,42 @@ describe("tab selection", () => {
         fireEvent.dragStart(button("/ts0/tb0"), { dataTransfer: dataTransfer() });
         expect(onRenderDragRect).toHaveBeenLastCalledWith(expect.anything(), model.getNodeById("t0"), undefined, [model.getNodeById("t0")]);
         fireEvent.dragEnd(button("/ts0/tb0"));
+    });
+});
+
+describe("without the tabSelection prop", () => {
+    it("keeps upstream clicks and keys and never selects tabs", async () => {
+        const { model, ref, onTabSelectionChange } = renderLayout({ tabSelection: undefined });
+        const shown = (id: string) => (model.getNodeById(id) as TabSetNode).getSelectedNode()?.getId();
+        fireEvent.click(button("/ts0/tb1"));
+        fireEvent.click(button("/ts0/tb3"), { ctrlKey: true });
+        expect(shown("ts0")).toBe("t3");
+        fireEvent.click(button("/ts0/tb0"), { shiftKey: true });
+        expect(shown("ts0")).toBe("t0");
+        fireEvent.keyDown(button("/ts0/tb0"), { key: "ArrowRight", shiftKey: true });
+        // Mod+Enter activates the tab like Enter
+        fireEvent.keyDown(button("/ts1/tb1"), { key: "Enter", ctrlKey: true });
+        expect(shown("ts1")).toBe("t5");
+        act(() => ref.current!.setSelectedTabIds(["t0", "t1"]));
+        expect(ref.current!.getSelectedTabIds()).toEqual([]);
+        expect(onTabSelectionChange).not.toHaveBeenCalled();
+        await waitFor(() => expect(button("/ts0/tb0")).toHaveAttribute("aria-keyshortcuts", "Control+Delete"));
+        expect(multiSelected()).toEqual([]);
+    });
+
+    it("advertises the selection keys only with tabSelection", () => {
+        renderLayout();
+        expect(button("/ts0/tb0")).toHaveAttribute("aria-keyshortcuts", "Control+Delete Control+Enter Shift+ArrowLeft Shift+ArrowRight");
+        expect(button("/border/left/tb0").getAttribute("aria-keyshortcuts")).toContain("Control+Enter Shift+ArrowLeft Shift+ArrowRight");
+    });
+
+    it("clears the selection when tabSelection is turned off", () => {
+        const { model, ref, onTabSelectionChange, rerender } = renderLayout();
+        act(() => ref.current!.setSelectedTabIds(["t0", "t1"]));
+        rerender(<Layout model={model} factory={factory} ref={ref} onTabSelectionChange={onTabSelectionChange} />);
+        expect(ref.current!.getSelectedTabIds()).toEqual([]);
+        expect(onTabSelectionChange).toHaveBeenLastCalledWith([]);
+        expect(multiSelected()).toEqual([]);
     });
 });
 

@@ -25,6 +25,7 @@ export const TabButton = (props: ITabButtonProps) => {
     const icons = controller.getIcons();
     const keyMap = controller.getKeyMap();
     const areaNavigation = controller.isAreaNavigation();
+    const tabSelection = controller.isTabSelection();
     const editing = controller.getEditingTab() === tabNode;
 
     // callback ref: fires on attach/detach including remounts, unlike an effect
@@ -130,13 +131,13 @@ export const TabButton = (props: ITabButtonProps) => {
         if (matchesKey(event, keyMap.focusTabToggle)) {
             focusTabContent();
             event.preventDefault();
-        } else if (matchesKey(event, keyMap.toggleTabSelection)) {
+        } else if (tabSelection && matchesKey(event, keyMap.toggleTabSelection)) {
             controller.toggleTabSelection(tabNode);
             event.preventDefault();
-        } else if (matchesKey(event, keyMap.extendTabSelectionPrevious)) {
+        } else if (tabSelection && matchesKey(event, keyMap.extendTabSelectionPrevious)) {
             extendTabSelection(-1);
             event.preventDefault();
-        } else if (matchesKey(event, keyMap.extendTabSelectionNext)) {
+        } else if (tabSelection && matchesKey(event, keyMap.extendTabSelectionNext)) {
             extendTabSelection(1);
             event.preventDefault();
         } else if (areaNavigation && matchesKey(event, keyMap.enterArea)) {
@@ -269,9 +270,9 @@ export const TabButton = (props: ITabButtonProps) => {
             areaNavigation ? toAriaKeyShortcuts(keyMap.enterArea) : undefined,
             tabNode.isCloseable() ? toAriaKeyShortcuts(keyMap.closeTab) : undefined,
             tabNode.isEnableRename() ? toAriaKeyShortcuts(keyMap.renameTab) : undefined,
-            toAriaKeyShortcuts(keyMap.toggleTabSelection),
-            toAriaKeyShortcuts(keyMap.extendTabSelectionPrevious),
-            toAriaKeyShortcuts(keyMap.extendTabSelectionNext),
+            tabSelection ? toAriaKeyShortcuts(keyMap.toggleTabSelection) : undefined,
+            tabSelection ? toAriaKeyShortcuts(keyMap.extendTabSelectionPrevious) : undefined,
+            tabSelection ? toAriaKeyShortcuts(keyMap.extendTabSelectionNext) : undefined,
         ]
             .filter(Boolean)
             .join(" ") || undefined;

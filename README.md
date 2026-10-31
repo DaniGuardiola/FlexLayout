@@ -26,7 +26,7 @@ Features:
 * Tab groups (Chrome-style colored group pills) — see [Tab Groups](#tab-groups) / [example](https://caplin.github.io/FlexLayout/demos/v0.11/examples/tab-groups/)
 * Border tabsets: splitting the layout or overlaying it, with autohide when empty option — see [Borders](https://caplin.github.io/FlexLayout/demos/v0.11/examples/borders/)
 * Tabset dragging (move all tabs in a tabset in one operation)
-* Selecting several tabs (Cmd/Ctrl and Shift click) and moving them together — see [Selecting and Moving Several Tabs](#selecting-and-moving-several-tabs)
+* Opt-in selection of several tabs (Cmd/Ctrl and Shift click) to move them together — see [Selecting and Moving Several Tabs](#selecting-and-moving-several-tabs)
 * Opt-in area keyboard navigation (Tab moves between tabsets and borders, Enter steps into a panel) — see [Moving Between Areas with the Keyboard](#moving-between-areas-with-the-keyboard)
 * Docking to tabsets or edges of the frame
 * Maximizing tabsets (double-click tabset header or use icon)
@@ -519,7 +519,15 @@ For an example see [Tab Groups](https://caplin.github.io/FlexLayout/demos/v0.11/
 
 ## Selecting and Moving Several Tabs
 
-Tabs can be selected together and dragged as one, like files in a file manager. A selection always holds at least two tabs; a single tab is never "selected" (dragging or right-clicking a tab acts on it directly). The selection is separate from the tab shown in each tabset, and it is view state: it is not stored in the model, so it is never saved or serialized.
+Tabs can be selected together and dragged as one, like files in a file manager. This is off by default; set the `tabSelection` prop to turn it on:
+
+```tsx
+<Layout model={model} factory={factory} tabSelection={true} />
+```
+
+Without it, Cmd/Ctrl and Shift clicks and the selection keys below act as plain clicks and keys, as in upstream FlexLayout, the selection stays empty and `setSelectedTabIds` does nothing; turning the prop off clears any selection. `Actions.moveNodes` (below) works either way.
+
+A selection always holds at least two tabs; a single tab is never "selected" (dragging or right-clicking a tab acts on it directly). The selection is separate from the tab shown in each tabset, and it is view state: it is not stored in the model, so it is never saved or serialized.
 
 * Cmd (macOS) / Ctrl click a tab to start a selection with the last clicked or keyboard-activated tab (or, if there is none yet, the shown tab of the active tabset); further Cmd/Ctrl clicks add or remove tabs. Removing all but one tab clears the selection.
 * Shift click selects the range from the last clicked tab to the clicked tab. Ranges never reach across tabsets or borders: a Shift click in another tabset starts a new range there, from that tabset's shown tab. Cmd/Ctrl clicks can still combine tabs from several tabsets.
@@ -532,7 +540,7 @@ Selected tab buttons get the `flexlayout__tab_button--multi-selected` (or `flexl
 ```tsx
 const layoutRef = React.useRef<ILayoutApi>(null);
 
-<Layout ref={layoutRef} model={model} factory={factory} onTabSelectionChange={(tabIds) => console.log(tabIds)} />;
+<Layout ref={layoutRef} model={model} factory={factory} tabSelection={true} onTabSelectionChange={(tabIds) => console.log(tabIds)} />;
 
 layoutRef.current!.getSelectedTabIds(); // the selected tab ids in document order, [] when none
 layoutRef.current!.setSelectedTabIds(["tab1", "tab4"]); // pass [] to clear
@@ -558,7 +566,7 @@ By default Tab walks every focusable element of the layout in document order: ta
 * The order is the layout order: the tabsets in layout tree order (each row lays out its children left to right or top to bottom, so this is the visual reading order; only the maximized tabset while one is maximized) with each splitter between the areas it separates, then the borders with tabs in the order of the model's `borders` array, each after its splitter while it is open, then the focusable elements of the toolbar of every shown border (the `buttons` added via `onRenderTabSet`, plus the overflow and popout buttons) as the last stops. A border without tabs is not an area, but its toolbar is still reachable when it stays shown (`enableAutoHide: false`).
 * Tab from the last stop leaves the layout to the next focusable element after it, and Shift+Tab from the first stop leaves to the element before it. Tab entering the layout from outside (in either direction) lands on the stop of the area that last had focus, else the first area; only that area's tab button has `tabindex="0"`.
 * Left / Right (and Up / Down) move between the tabs of a strip as before; Home / End move to the first / last tab.
-* Enter on a tab shows it if needed (opening a collapsed border) and moves focus to the first focusable element in its content, or to the content itself when it has none. Space only shows the tab. Mod+Enter still toggles the tab selection, and renaming stays on F2 and double-click.
+* Enter on a tab shows it if needed (opening a collapsed border) and moves focus to the first focusable element in its content, or to the content itself when it has none. Space only shows the tab. With `tabSelection`, Mod+Enter still toggles the tab selection; renaming stays on F2 and double-click.
 * Inside the content Tab and Shift+Tab move through its controls as usual, skipping what the browser skips (hidden or `inert` elements, controls in a disabled fieldset). Tab past the last control goes on to the next stop, and Shift+Tab before the first one returns to the panel's own tab. Escape returns to the panel's tab unless the content handled the key first (called `preventDefault()`, as menus, editors and dialogs usually do).
 * F6 / Shift+F6 move to the next / previous area's stop (wrapping) from anywhere within the layout, including inside a panel or on a splitter.
 * Popout windows navigate between their own tabsets the same way. Floating panels are not areas and Tab does not reach them in this mode (Tab from the last stop leaves the layout, and Tab entering it lands on an area); click into a floating panel to tab through its contents.

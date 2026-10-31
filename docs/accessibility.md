@@ -9,7 +9,7 @@ FlexLayout has keyboard operability, ARIA semantics and visible focus styling bu
 * The tab overflow menu (and the reusable popup menu below) use `role="menu"`/`role="menuitem"`; the button that opens the overflow menu advertises `aria-haspopup` and `aria-expanded`.
 * Decorative icons are hidden from assistive technology with `aria-hidden`.
 * Tabs carry explicit accessible names (including pinned state), advertise their keyboard shortcuts via `aria-keyshortcuts`, and toggle buttons expose their state via `aria-pressed`.
-* Tabs in the [tab selection](../README.md#selecting-and-moving-several-tabs) carry the accessible description "Selected for move" (`aria-description`, translatable as `I18nLabel.Selected_For_Move`); `aria-selected` stays reserved for the shown tab.
+* With the `tabSelection` prop, tabs in the [tab selection](../README.md#selecting-and-moving-several-tabs) carry the accessible description "Selected for move" (`aria-description`, translatable as `I18nLabel.Selected_For_Move`); `aria-selected` stays reserved for the shown tab.
 * Group pills are exposed as disclosure buttons (`role="button"` with `aria-expanded`) named after the group.
 
 ## Keyboard operation
@@ -21,9 +21,9 @@ FlexLayout has keyboard operability, ARIA semantics and visible focus styling bu
 | Tabs | Ctrl+Delete (default, rebindable) | Close the focused tab (when it is closeable)                                   |
 | Tabs | F2 (default, rebindable) | Rename the focused tab (when it is renameable)                                 |
 | Tabs | `focusTabToggle` binding (off by default) | Toggle focus between the selected tab button and its content                   |
-| Tabs | Shift+ArrowLeft / Shift+ArrowRight (default, rebindable) | Extend the [tab selection](../README.md#selecting-and-moving-several-tabs) to the previous / next tab |
-| Tabs | Mod+Enter (default, rebindable) | Add the focused tab to the tab selection or remove it                          |
-| Layout | Escape (default, rebindable) | Clear the tab selection (when pressed within the layout)                       |
+| Tabs | Shift+ArrowLeft / Shift+ArrowRight (default, rebindable, `tabSelection` only) | Extend the [tab selection](../README.md#selecting-and-moving-several-tabs) to the previous / next tab |
+| Tabs | Mod+Enter (default, rebindable, `tabSelection` only) | Add the focused tab to the tab selection or remove it                          |
+| Layout | Escape (default, rebindable, `tabSelection` only) | Clear the tab selection (when pressed within the layout)                       |
 | Group pills | Enter / Space | Collapse or expand the focused group                                           |
 | Group pills | ContextMenu / Shift+F10 | Open the group menu (rename, color, collapse/expand, ungroup)                  |
 | Layout | `focusNextTabset` / `focusPreviousTabset` bindings (off by default) | Move focus to the next / previous tabset, mapped to Ctrl+[, Ctrl+] in the demo |
@@ -53,7 +53,7 @@ The command shortcuts above are configured through the `keyMap` layout prop. Bin
 ```
 
 * A binding is a `KeyboardEvent.key` name, optionally prefixed with the modifiers Ctrl, Shift, Alt or Meta joined with `+` — e.g. `"F2"`, `"Escape"`, `"Ctrl+Delete"`, `"Ctrl+]"`. `Mod` stands for Meta (Cmd) on Apple platforms and Ctrl elsewhere, e.g. `"Mod+Enter"`. Prefer function keys or modifier combinations: WCAG 2.1.4 requires single printable-character shortcuts to be remappable or off by default.
-* The configured bindings are advertised to assistive technology via `aria-keyshortcuts` (on the tab buttons, tab panels and tablists), so the advertised shortcuts always match the configured ones.
+* The configured bindings are advertised to assistive technology via `aria-keyshortcuts` (on the tab buttons, tab panels and tablists), so the advertised shortcuts always match the configured ones. The tab selection bindings are only advertised (and only act) with the `tabSelection` prop.
 * `defaultKeyMap` is exported so an application can display the bindings (e.g. in a keyboard-help dialog) or register them with its own shortcut manager.
 * The structural keys of the ARIA widget patterns (arrow keys within a tablist, Enter/Space activation, menu navigation, splitter arrows) are fixed and not remappable — assistive technology announces these from the widget roles themselves.
 * Pressing Enter on an already selected tab also moves focus into its content (in addition to the optional `focusTabToggle` binding).

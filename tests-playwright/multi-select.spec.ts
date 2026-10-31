@@ -212,3 +212,17 @@ test.describe("tab multi-select", () => {
         await expect.poll(() => multiSelectedNames(page)).toEqual([]);
     });
 });
+
+test.describe("without the tabSelection prop", () => {
+    test("Cmd/Ctrl and Shift clicks and the selection keys select nothing", async ({ page }) => {
+        await page.goto("/demo?layout=test_two_tabs");
+        await waitForBox(findPath(page, "/ts1"), "second tabset");
+        await findTabButton(page, "/ts0", 0).click();
+        await findTabButton(page, "/ts1", 0).click({ modifiers: ["ControlOrMeta"] });
+        await findTabButton(page, "/ts0", 0).click({ modifiers: ["Shift"] });
+        await page.keyboard.press("ControlOrMeta+Enter");
+        await page.keyboard.press("Shift+ArrowRight");
+        await expect(page.locator(".flexlayout__tab_button--multi-selected")).toHaveCount(0);
+        await expect(findTabButton(page, "/ts0", 0)).not.toHaveAttribute("aria-keyshortcuts", /Enter|Shift/);
+    });
+});

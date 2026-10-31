@@ -238,6 +238,13 @@ export const LayoutInternal = React.forwardRef<LayoutController, ILayoutInternal
         return;
     }, [props.model, controller, layout]);
 
+    // turning tabSelection off clears the tab selection
+    React.useEffect(() => {
+        if (controller.isMainLayout() && props.tabSelection !== true) {
+            controller.setSelectedTabIds([]);
+        }
+    }, [props.tabSelection, controller]);
+
     // offscreen probes for updateLayoutMetrics (main layout only)
     const metrics = controller.isMainLayout() ? (
         <div className={controller.getClassName(CLASSES.FLEXLAYOUT__LAYOUT_METRICS)}>

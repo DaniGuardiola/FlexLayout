@@ -464,7 +464,7 @@ describe("area navigation", () => {
 
     it("advertises the area keys", () => {
         renderLayout();
-        expect(tab("t0").getAttribute("aria-keyshortcuts")).toMatch(/^Enter Control\+Delete F2 /);
+        expect(tab("t0")).toHaveAttribute("aria-keyshortcuts", "Enter Control+Delete F2");
         expect(panel("t0")).toHaveAttribute("aria-keyshortcuts", "Escape F6 Shift+F6");
         expect(tab("t0").closest('[role="tablist"]')).toHaveAttribute("aria-keyshortcuts", "F6 Shift+F6");
         expect(tab("b0").closest('[role="tablist"]')).toHaveAttribute("aria-keyshortcuts", "F6 Shift+F6");

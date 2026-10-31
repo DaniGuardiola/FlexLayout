@@ -75,16 +75,16 @@ export interface IKeyMap {
      * returns focus to the tab button. Escape-to-dismiss is an ARIA convention, so overriding
      * this is rarely a good idea, but it can be rebound or disabled like the other commands */
     closeOverlayBorder?: string;
-    /** extends the tab selection from the focused tab button to the previous tab in its tabset
-     * or border, moving focus there */
+    /** with tabSelection: extends the tab selection from the focused tab button to the previous
+     * tab in its tabset or border, moving focus there */
     extendTabSelectionPrevious?: string;
-    /** extends the tab selection from the focused tab button to the next tab in its tabset or
-     * border, moving focus there */
+    /** with tabSelection: extends the tab selection from the focused tab button to the next tab
+     * in its tabset or border, moving focus there */
     extendTabSelectionNext?: string;
-    /** adds the focused tab button's tab to the tab selection or removes it (a selection always
-     * holds at least two tabs) */
+    /** with tabSelection: adds the focused tab button's tab to the tab selection or removes it (a
+     * selection always holds at least two tabs) */
     toggleTabSelection?: string;
-    /** clears the tab selection */
+    /** with tabSelection: clears the tab selection */
     clearTabSelection?: string;
     /** with tabNavigation "areas": moves focus to the shown tab of the next area (wrapping), from
      * anywhere within the layout including inside tab content */
