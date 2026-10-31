@@ -27,6 +27,7 @@ Features:
 * Border tabsets: splitting the layout or overlaying it, with autohide when empty option — see [Borders](https://caplin.github.io/FlexLayout/demos/v0.11/examples/borders/)
 * Tabset dragging (move all tabs in a tabset in one operation)
 * Selecting several tabs (Cmd/Ctrl and Shift click) and moving them together — see [Selecting and Moving Several Tabs](#selecting-and-moving-several-tabs)
+* Opt-in area keyboard navigation (Tab moves between tabsets and borders, Enter steps into a panel) — see [Moving Between Areas with the Keyboard](#moving-between-areas-with-the-keyboard)
 * Docking to tabsets or edges of the frame
 * Maximizing tabsets (double-click tabset header or use icon)
 * Tab overflow (menu for hidden tabs, mouse wheel scrolling) — see [Many Tabs](https://caplin.github.io/FlexLayout/demos/v0.11/examples/many-tabs/)
@@ -542,6 +543,25 @@ A selection move is a single action, so `onAction` sees it once and undo treats 
 ```js
 model.doAction(Actions.moveNodes(["tab4", "tab1"], "tabset2", DockLocation.CENTER, -1)); // tab4 becomes the shown tab
 ```
+
+## Moving Between Areas with the Keyboard
+
+By default Tab walks every focusable element of the layout in document order: tab strips, toolbar buttons and the contents of every panel. Set the `tabNavigation` prop to `"areas"` to move between areas first and step into the one you want:
+
+```tsx
+<Layout model={model} factory={factory} tabNavigation="areas" />
+```
+
+* An area is a tabset or a border. Tab and Shift+Tab move from the shown tab of one area to the next, skipping tab content, tabset toolbar buttons (maximize, overflow, popout, sticky and custom buttons) and any buttons rendered inside tab buttons. A collapsed border is a stop on its first tab.
+* The order is the layout order: the tabsets in layout tree order (each row lays out its children left to right or top to bottom, so this is the visual reading order; only the maximized tabset while one is maximized), then the borders with tabs in the order of the model's `borders` array, then the focusable elements of each border's toolbar (the `buttons` added via `onRenderTabSet`, plus the overflow and popout buttons) as the last stops.
+* Tab from the last stop leaves the layout to the next focusable element after it, and Shift+Tab from the first area's tab leaves to the element before it. Tab entering the layout from outside (in either direction) lands on the area that last had focus, else the first area; only that area's tab button has `tabindex="0"`.
+* Left / Right (and Up / Down) move between the tabs of a strip as before; Home / End move to the first / last tab.
+* Enter on a tab shows it if needed (opening a collapsed border) and moves focus to the first focusable element in its content, or to the content itself when it has none. Space only shows the tab. Mod+Enter still toggles the tab selection, and renaming stays on F2 and double-click.
+* Inside the content Tab and Shift+Tab move through its controls as usual. Tab past the last control goes on to the next area's tab, and Shift+Tab before the first one returns to the panel's own tab. Escape returns to the panel's tab unless the content handled the key first (called `preventDefault()`, as menus, editors and dialogs usually do).
+* F6 / Shift+F6 move to the next / previous area's tab (wrapping) from anywhere within the layout, including inside a panel.
+* Popout windows navigate between their own tabsets the same way. Floating panels and sublayouts are not areas: their contents are tabbed through as part of the panel or page that holds them.
+
+Enter, Escape and F6 / Shift+F6 are the `enterArea`, `exitArea`, `nextArea` and `previousArea` bindings of the `keyMap` prop (see [Accessibility](docs/accessibility.md)); they only apply with `tabNavigation="areas"`. Do not also bind `focusTabToggle` to F6 in this mode, as it takes precedence on tab buttons.
 
 ## Tabset Placeholder
 

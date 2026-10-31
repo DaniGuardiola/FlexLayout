@@ -15,6 +15,7 @@ Every element the library renders carries a `data-layout-path` attribute describ
 | `.../button/<name>` | Toolbar buttons: `max`, `overflow`, `close`, `popout`, `float`, `pin` |
 | `.../textbox` | The inline rename textbox |
 | `/popup-menu` | The overflow/popup menu |
+| `/area-start` / `/area-end` | With `tabNavigation="areas"`, the elements (`tabindex="-1"`) at the start and end of the layout that Tab leaves it from |
 
 ```ts
 // playwright example: select the second tab of the first tabset, check a border panel opened
