@@ -33,18 +33,12 @@ describe("matchesKey", () => {
         expect(matchesKey(keyEvent("w", { altKey: true, metaKey: true }), "Alt+Meta+W")).toBe(true);
     });
 
-    it("names the space bar Space", () => {
-        expect(matchesKey(keyEvent(" ", { ctrlKey: true }), "Ctrl+Space")).toBe(true);
-        expect(matchesKey(keyEvent(" "), "Space")).toBe(true);
-        expect(matchesKey(keyEvent("s"), "Space")).toBe(false);
-    });
-
     it("reads Mod as Meta on Apple platforms and Ctrl elsewhere", () => {
         const mod = isApplePlatform() ? { metaKey: true } : { ctrlKey: true };
         const other = isApplePlatform() ? { ctrlKey: true } : { metaKey: true };
-        expect(matchesKey(keyEvent(" ", mod), "Mod+Space")).toBe(true);
-        expect(matchesKey(keyEvent(" ", other), "Mod+Space")).toBe(false);
-        expect(matchesKey(keyEvent(" "), "Mod+Space")).toBe(false);
+        expect(matchesKey(keyEvent("Enter", mod), "Mod+Enter")).toBe(true);
+        expect(matchesKey(keyEvent("Enter", other), "Mod+Enter")).toBe(false);
+        expect(matchesKey(keyEvent("Enter"), "Mod+Enter")).toBe(false);
     });
 
     it("never matches an undefined or empty spec (a disabled binding)", () => {
@@ -100,6 +94,6 @@ describe("toAriaKeyShortcuts", () => {
     });
 
     it("spells Mod as the platform modifier", () => {
-        expect(toAriaKeyShortcuts("Mod+Space")).toBe(isApplePlatform() ? "Meta+Space" : "Control+Space");
+        expect(toAriaKeyShortcuts("Mod+Enter")).toBe(isApplePlatform() ? "Meta+Enter" : "Control+Enter");
     });
 });

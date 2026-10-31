@@ -144,7 +144,7 @@ test.describe("tab multi-select", () => {
             ]);
     });
 
-    test("Shift+Arrow keys extend the selection and Cmd/Ctrl+Space toggles", async ({ page }) => {
+    test("Shift+Arrow keys extend the selection and Cmd/Ctrl+Enter toggles without showing the tab", async ({ page }) => {
         await load(page);
         await findTabButton(page, "/ts0", 0).click();
         await page.keyboard.press("Shift+ArrowRight");
@@ -158,9 +158,11 @@ test.describe("tab multi-select", () => {
         await page.keyboard.press("ArrowRight");
         await page.keyboard.press("ArrowRight");
         await expect(findTabButton(page, "/ts0", 3)).toBeFocused();
-        await page.keyboard.press("ControlOrMeta+Space");
+        await page.keyboard.press("ControlOrMeta+Enter");
         await expect.poll(() => multiSelectedNames(page)).toEqual(["One", "Two", "Four"]);
-        await page.keyboard.press("ControlOrMeta+Space");
+        await expect(findTabButton(page, "/ts0", 0)).toHaveClass(/flexlayout__tab_button--selected/);
+        await expect(findTabButton(page, "/ts0", 3)).toHaveClass(/flexlayout__tab_button--unselected/);
+        await page.keyboard.press("ControlOrMeta+Enter");
         await expect.poll(() => multiSelectedNames(page)).toEqual(["One", "Two"]);
         await expect(findTabButton(page, "/ts0", 3)).not.toHaveClass(MULTI);
     });

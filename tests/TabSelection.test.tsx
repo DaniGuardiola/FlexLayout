@@ -152,17 +152,19 @@ describe("tab selection", () => {
     });
 
     it("extends the selection with Shift+Arrow keys and toggles with the toggle key", () => {
-        const { ref } = renderLayout();
+        const { model, ref } = renderLayout();
         fireEvent.keyDown(button("/ts0/tb1"), { key: "ArrowRight", shiftKey: true });
         expect(ref.current!.getSelectedTabIds()).toEqual(["t1", "t2"]);
         fireEvent.keyDown(button("/ts0/tb2"), { key: "ArrowRight", shiftKey: true });
         expect(ref.current!.getSelectedTabIds()).toEqual(["t1", "t2", "t3"]);
         fireEvent.keyDown(button("/ts0/tb3"), { key: "ArrowLeft", shiftKey: true });
         expect(ref.current!.getSelectedTabIds()).toEqual(["t1", "t2"]);
-        fireEvent.keyDown(button("/ts1/tb1"), { key: " ", ctrlKey: true });
+        fireEvent.keyDown(button("/ts1/tb1"), { key: "Enter", ctrlKey: true });
         expect(ref.current!.getSelectedTabIds()).toEqual(["t1", "t2", "t5"]);
-        fireEvent.keyDown(button("/ts0/tb1"), { key: " ", ctrlKey: true });
-        fireEvent.keyDown(button("/ts0/tb2"), { key: " ", ctrlKey: true });
+        // the toggle key does not show the tab
+        expect((model.getNodeById("ts1") as TabSetNode).getSelectedNode()?.getId()).toBe("t4");
+        fireEvent.keyDown(button("/ts0/tb1"), { key: "Enter", ctrlKey: true });
+        fireEvent.keyDown(button("/ts0/tb2"), { key: "Enter", ctrlKey: true });
         expect(ref.current!.getSelectedTabIds()).toEqual([]);
     });
 

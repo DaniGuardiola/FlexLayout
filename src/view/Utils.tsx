@@ -67,11 +67,7 @@ export function matchesKey(event: IKeyEventLike, spec: string | undefined): bool
     const key = parts.pop()!;
     const platformMod = isApplePlatform() ? "meta" : "ctrl";
     const has = (mod: string) => parts.some((p) => p.toLowerCase() === mod || (p.toLowerCase() === "mod" && mod === platformMod));
-    return normalizeKey(event.key) === normalizeKey(key) && event.ctrlKey === has("ctrl") && event.shiftKey === has("shift") && event.altKey === has("alt") && event.metaKey === has("meta");
-}
-
-function normalizeKey(key: string) {
-    return key === " " ? "space" : key.toLowerCase();
+    return event.key.toLowerCase() === key.toLowerCase() && event.ctrlKey === has("ctrl") && event.shiftKey === has("shift") && event.altKey === has("alt") && event.metaKey === has("meta");
 }
 
 /** @internal true on macOS and iOS, where the Mod key spec modifier means Meta (Cmd) */

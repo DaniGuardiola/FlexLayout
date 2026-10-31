@@ -43,7 +43,7 @@ export interface ITabRenderValues {
 }
 
 /** Keyboard bindings for the layout's command shortcuts, each given as a key spec such as
- * "F2", "Escape" or "Ctrl+Delete" (a KeyboardEvent.key name or Space, optionally prefixed by
+ * "F2", "Escape" or "Ctrl+Delete" (a KeyboardEvent.key name, optionally prefixed by
  * modifiers Ctrl, Shift, Alt, Meta joined with +; Mod is Meta on Apple platforms and Ctrl elsewhere).
  *
  * Bindings given in the Layout keyMap prop are merged over defaultKeyMap; passing an explicit
@@ -98,7 +98,7 @@ export const defaultKeyMap: Readonly<IKeyMap> = {
     closeOverlayBorder: "Escape",
     extendTabSelectionPrevious: "Shift+ArrowLeft",
     extendTabSelectionNext: "Shift+ArrowRight",
-    toggleTabSelection: "Mod+Space",
+    toggleTabSelection: "Mod+Enter",
     clearTabSelection: "Escape",
 };
 

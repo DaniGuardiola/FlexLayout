@@ -149,7 +149,7 @@ test.describe("keyboard operation", () => {
 
         const tab = page.locator('[data-layout-path="/ts0/tb0"]');
         // advertised to assistive tech, along with the close/rename and tab selection shortcuts
-        await expect(tab).toHaveAttribute("aria-keyshortcuts", /^F6 Control\+Delete F2 (Meta|Control)\+Space Shift\+ArrowLeft Shift\+ArrowRight$/);
+        await expect(tab).toHaveAttribute("aria-keyshortcuts", /^F6 Control\+Delete F2 (Meta|Control)\+Enter Shift\+ArrowLeft Shift\+ArrowRight$/);
 
         await tab.focus();
         await page.keyboard.press("F6");

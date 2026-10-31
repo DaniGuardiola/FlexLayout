@@ -3,7 +3,7 @@
 * **Added:** `Actions.moveNodes(fromNodeIds, toNodeId, location, index, select?)` (`Actions.MOVE_NODES`) moves several tabs to one drop target in a single action (one `onAction` call, one undo step); the tabs land together in document order and the first listed tab becomes selected.
 * **Added:** `onTabSelectionChange` Layout prop, and `getSelectedTabIds()` / `setSelectedTabIds(tabIds)` on the Layout ref.
 * **Added:** `flexlayout__tab_button--multi-selected` and `flexlayout__border_button--multi-selected` classes (`CLASSES.FLEXLAYOUT__TAB_BUTTON__MULTI_SELECTED`, `CLASSES.FLEXLAYOUT__BORDER_BUTTON__MULTI_SELECTED`), tinted with the new `--fl-color-tab-multi-selected-background` theme variable.
-* **Added:** `keyMap` bindings `extendTabSelectionPrevious` (Shift+ArrowLeft), `extendTabSelectionNext` (Shift+ArrowRight), `toggleTabSelection` (Mod+Space) and `clearTabSelection` (Escape). Key specs accept `Space` and the `Mod` modifier (Meta on Apple platforms, Ctrl elsewhere).
+* **Added:** `keyMap` bindings `extendTabSelectionPrevious` (Shift+ArrowLeft), `extendTabSelectionNext` (Shift+ArrowRight), `toggleTabSelection` (Mod+Enter) and `clearTabSelection` (Escape). Key specs accept the `Mod` modifier (Meta on Apple platforms, Ctrl elsewhere).
 * **Added:** `DragRectRenderCallback` receives an optional fourth argument `nodes` with every dragged tab, grabbed tab first; a selection drag's default drag image reads "Move tabs (n)".
 
 ## 0.11.1 - 2026-09-26
