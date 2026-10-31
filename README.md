@@ -26,6 +26,7 @@ Features:
 * Tab groups (Chrome-style colored group pills) — see [Tab Groups](#tab-groups) / [example](https://caplin.github.io/FlexLayout/demos/v0.11/examples/tab-groups/)
 * Border tabsets: splitting the layout or overlaying it, with autohide when empty option — see [Borders](https://caplin.github.io/FlexLayout/demos/v0.11/examples/borders/)
 * Tabset dragging (move all tabs in a tabset in one operation)
+* Selecting several tabs (Cmd/Ctrl and Shift click) and moving them together — see [Selecting and Moving Several Tabs](#selecting-and-moving-several-tabs)
 * Docking to tabsets or edges of the frame
 * Maximizing tabsets (double-click tabset header or use icon)
 * Tab overflow (menu for hidden tabs, mouse wheel scrolling) — see [Many Tabs](https://caplin.github.io/FlexLayout/demos/v0.11/examples/many-tabs/)
@@ -514,6 +515,33 @@ model.doAction(Actions.removeTabFromGroup("tab2"));                    // move a
 ```
 
 For an example see [Tab Groups](https://caplin.github.io/FlexLayout/demos/v0.11/examples/tab-groups/) — `examples/tab-groups/TabGroups.tsx` (also the `Tab Groups` layout in the demo app).
+
+## Selecting and Moving Several Tabs
+
+Tabs can be selected together and dragged as one, like files in a file manager. A selection always holds at least two tabs; a single tab is never "selected" (dragging or right-clicking a tab acts on it directly). The selection is separate from the tab shown in each tabset, and it is view state: it is not stored in the model, so it is never saved or serialized.
+
+* Cmd (macOS) / Ctrl click a tab to start a selection with the last clicked tab (or, if no tab was clicked yet, the shown tab of the active tabset); further Cmd/Ctrl clicks add or remove tabs. Removing all but one tab clears the selection.
+* Shift click selects the range from the last clicked tab to the clicked tab. Ranges never reach across tabsets or borders: a Shift click in another tabset starts a new range there, from that tabset's shown tab. Cmd/Ctrl clicks can still combine tabs from several tabsets.
+* A plain click shows the tab as before and clears the selection, as do Escape, a pointer down anywhere in the layout outside the tab buttons, and closing tabs until fewer than two remain.
+* Keyboard: Shift+ArrowLeft / Shift+ArrowRight on a focused tab extends the selection within its tabset, and Mod+Space (Cmd+Space on macOS, Ctrl+Space elsewhere) adds or removes the focused tab. These bindings, and Escape for clearing, are configurable via the `keyMap` prop (see [Accessibility](docs/accessibility.md)).
+* Dragging a selected tab moves the whole selection; dragging an unselected tab moves only that tab and leaves the selection alone. The moved tabs land together at the drop point in their document order (tabset order, then tab order), the grabbed tab becomes the shown tab, and docking to an edge puts them all in one new tabset. Tabsets left empty are removed as with single moves.
+
+Selected tab buttons get the `flexlayout__tab_button--multi-selected` (or `flexlayout__border_button--multi-selected`) class, tinted with the `--fl-color-tab-multi-selected-background` theme variable. When dragging a selection the default drag image reads "Move tabs (n)", and `onRenderDragRect` receives every dragged tab as its fourth argument, grabbed tab first, to render a custom preview.
+
+```tsx
+const layoutRef = React.useRef<ILayoutApi>(null);
+
+<Layout ref={layoutRef} model={model} factory={factory} onTabSelectionChange={(tabIds) => console.log(tabIds)} />;
+
+layoutRef.current!.getSelectedTabIds(); // the selected tab ids in document order, [] when none
+layoutRef.current!.setSelectedTabIds(["tab1", "tab4"]); // pass [] to clear
+```
+
+A selection move is a single action, so `onAction` sees it once and undo treats it as one step. It can also be done programmatically:
+
+```js
+model.doAction(Actions.moveNodes(["tab4", "tab1"], "tabset2", DockLocation.CENTER, -1)); // tab4 becomes the shown tab
+```
 
 ## Tabset Placeholder
 

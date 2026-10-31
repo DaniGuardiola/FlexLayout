@@ -1,3 +1,11 @@
+## Unreleased (dio.la fork, 0.11.1-dio.1)
+* **Added:** Selecting several tabs and moving them together. Cmd/Ctrl click toggles tabs into a selection (starting with the last clicked tab), Shift click selects a range within a tabset or border, and dragging a selected tab moves the whole selection. A selection always holds two or more tabs and is view state only (never stored in the model). See README "Selecting and Moving Several Tabs".
+* **Added:** `Actions.moveNodes(fromNodeIds, toNodeId, location, index, select?)` (`Actions.MOVE_NODES`) moves several tabs to one drop target in a single action (one `onAction` call, one undo step); the tabs land together in document order and the first listed tab becomes selected.
+* **Added:** `onTabSelectionChange` Layout prop, and `getSelectedTabIds()` / `setSelectedTabIds(tabIds)` on the Layout ref.
+* **Added:** `flexlayout__tab_button--multi-selected` and `flexlayout__border_button--multi-selected` classes (`CLASSES.FLEXLAYOUT__TAB_BUTTON__MULTI_SELECTED`, `CLASSES.FLEXLAYOUT__BORDER_BUTTON__MULTI_SELECTED`), tinted with the new `--fl-color-tab-multi-selected-background` theme variable.
+* **Added:** `keyMap` bindings `extendTabSelectionPrevious` (Shift+ArrowLeft), `extendTabSelectionNext` (Shift+ArrowRight), `toggleTabSelection` (Mod+Space) and `clearTabSelection` (Escape). Key specs accept `Space` and the `Mod` modifier (Meta on Apple platforms, Ctrl elsewhere).
+* **Added:** `DragRectRenderCallback` receives an optional fourth argument `nodes` with every dragged tab, grabbed tab first; a selection drag's default drag image reads "Move tabs (n)".
+
 ## 0.11.1 - 2026-09-26
 * **Fixed:** `matchesKey` no longer throws on a `keydown` event that carries no `key` (e.g. a synthetic event or browser autofill) ([#529](https://github.com/caplin/FlexLayout/issues/529)).
 * **Fixed:** dragging a tab out of the overflow menu and releasing it outside the layout no longer leaves the drag state set and hijacks the next drag ([#528](https://github.com/caplin/FlexLayout/issues/528)).

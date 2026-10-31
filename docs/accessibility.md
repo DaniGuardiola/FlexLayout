@@ -20,6 +20,9 @@ FlexLayout has keyboard operability, ARIA semantics and visible focus styling bu
 | Tabs | Ctrl+Delete (default, rebindable) | Close the focused tab (when it is closeable)                                   |
 | Tabs | F2 (default, rebindable) | Rename the focused tab (when it is renameable)                                 |
 | Tabs | `focusTabToggle` binding (off by default) | Toggle focus between the selected tab button and its content                   |
+| Tabs | Shift+ArrowLeft / Shift+ArrowRight (default, rebindable) | Extend the [tab selection](../README.md#selecting-and-moving-several-tabs) to the previous / next tab |
+| Tabs | Mod+Space (default, rebindable) | Add the focused tab to the tab selection or remove it                          |
+| Layout | Escape (default, rebindable) | Clear the tab selection                                                        |
 | Group pills | Enter / Space | Collapse or expand the focused group                                           |
 | Group pills | ContextMenu / Shift+F10 | Open the group menu (rename, color, collapse/expand, ungroup)                  |
 | Layout | `focusNextTabset` / `focusPreviousTabset` bindings (off by default) | Move focus to the next / previous tabset, mapped to Ctrl+[, Ctrl+] in the demo |
@@ -41,7 +44,7 @@ The command shortcuts above are configured through the `keyMap` layout prop. Bin
 />
 ```
 
-* A binding is a `KeyboardEvent.key` name, optionally prefixed with the modifiers Ctrl, Shift, Alt or Meta joined with `+` — e.g. `"F2"`, `"Escape"`, `"Ctrl+Delete"`, `"Ctrl+]"`. Prefer function keys or modifier combinations: WCAG 2.1.4 requires single printable-character shortcuts to be remappable or off by default.
+* A binding is a `KeyboardEvent.key` name (or `Space`), optionally prefixed with the modifiers Ctrl, Shift, Alt or Meta joined with `+` — e.g. `"F2"`, `"Escape"`, `"Ctrl+Delete"`, `"Ctrl+]"`. `Mod` stands for Meta (Cmd) on Apple platforms and Ctrl elsewhere, e.g. `"Mod+Space"`. Prefer function keys or modifier combinations: WCAG 2.1.4 requires single printable-character shortcuts to be remappable or off by default.
 * The configured bindings are advertised to assistive technology via `aria-keyshortcuts` (on the tab buttons, tab panels and tablists), so the advertised shortcuts always match the configured ones.
 * `defaultKeyMap` is exported so an application can display the bindings (e.g. in a keyboard-help dialog) or register them with its own shortcut manager.
 * The structural keys of the ARIA widget patterns (arrow keys within a tablist, Enter/Space activation, menu navigation, splitter arrows) are fixed and not remappable — assistive technology announces these from the widget roles themselves.
