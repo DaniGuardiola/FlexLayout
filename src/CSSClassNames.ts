@@ -12,6 +12,7 @@ export enum CLASSES {
     FLEXLAYOUT__BORDER_BUTTON_TRAILING = "flexlayout__border_button_trailing",
     FLEXLAYOUT__BORDER_BUTTON__SELECTED = "flexlayout__border_button--selected",
     FLEXLAYOUT__BORDER_BUTTON__UNSELECTED = "flexlayout__border_button--unselected",
+    FLEXLAYOUT__BORDER_BUTTON__MULTI_SELECTED = "flexlayout__border_button--multi-selected",
     FLEXLAYOUT__BORDER_TOOLBAR_BUTTON_OVERFLOW = "flexlayout__border_toolbar_button_overflow",
     FLEXLAYOUT__BORDER_TOOLBAR_BUTTON_OVERFLOW_ = "flexlayout__border_toolbar_button_overflow_",
 
@@ -114,6 +115,7 @@ export enum CLASSES {
     FLEXLAYOUT__TAB_BORDER_OVERLAY = "flexlayout__tab_border_overlay",
     FLEXLAYOUT__TAB_BUTTON = "flexlayout__tab_button",
     FLEXLAYOUT__TAB_BUTTON_STRETCH = "flexlayout__tab_button_stretch",
+    FLEXLAYOUT__TAB_BUTTON__MULTI_SELECTED = "flexlayout__tab_button--multi-selected",
     FLEXLAYOUT__TAB_BUTTON_CONTENT = "flexlayout__tab_button_content",
     FLEXLAYOUT__TAB_BUTTON_LEADING = "flexlayout__tab_button_leading",
     FLEXLAYOUT__TAB_BUTTON_OVERFLOW = "flexlayout__tab_button_overflow",

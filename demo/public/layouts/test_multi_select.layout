@@ -1,0 +1,37 @@
+{
+  "global": {},
+  "borders": [
+    {
+      "type": "border",
+      "location": "left",
+      "children": [
+        { "type": "tab", "name": "L1", "component": "testing" },
+        { "type": "tab", "name": "L2", "component": "testing" }
+      ]
+    }
+  ],
+  "layout": {
+    "type": "row",
+    "weight": 100,
+    "children": [
+      {
+        "type": "tabset",
+        "weight": 50,
+        "children": [
+          { "type": "tab", "name": "One", "component": "testing" },
+          { "type": "tab", "name": "Two", "component": "testing" },
+          { "type": "tab", "name": "Three", "component": "testing" },
+          { "type": "tab", "name": "Four", "component": "testing" }
+        ]
+      },
+      {
+        "type": "tabset",
+        "weight": 50,
+        "children": [
+          { "type": "tab", "name": "Five", "component": "testing" },
+          { "type": "tab", "name": "Six", "component": "testing" }
+        ]
+      }
+    ]
+  }
+}

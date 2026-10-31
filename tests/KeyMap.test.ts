@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { defaultKeyMap, IKeyMap } from "../src";
-import { matchesKey, resolveKeyMap, toAriaKeyShortcuts, IKeyEventLike } from "../src/view/Utils";
+import { isApplePlatform, matchesKey, resolveKeyMap, toAriaKeyShortcuts, IKeyEventLike } from "../src/view/Utils";
 
 const keyEvent = (key: string, mods: Partial<IKeyEventLike> = {}): IKeyEventLike => ({
     key,
@@ -31,6 +31,20 @@ describe("matchesKey", () => {
         expect(matchesKey(event, "Ctrl+Shift+W")).toBe(true);
         expect(matchesKey(event, "Shift+Ctrl+W")).toBe(true);
         expect(matchesKey(keyEvent("w", { altKey: true, metaKey: true }), "Alt+Meta+W")).toBe(true);
+    });
+
+    it("names the space bar Space", () => {
+        expect(matchesKey(keyEvent(" ", { ctrlKey: true }), "Ctrl+Space")).toBe(true);
+        expect(matchesKey(keyEvent(" "), "Space")).toBe(true);
+        expect(matchesKey(keyEvent("s"), "Space")).toBe(false);
+    });
+
+    it("reads Mod as Meta on Apple platforms and Ctrl elsewhere", () => {
+        const mod = isApplePlatform() ? { metaKey: true } : { ctrlKey: true };
+        const other = isApplePlatform() ? { ctrlKey: true } : { metaKey: true };
+        expect(matchesKey(keyEvent(" ", mod), "Mod+Space")).toBe(true);
+        expect(matchesKey(keyEvent(" ", other), "Mod+Space")).toBe(false);
+        expect(matchesKey(keyEvent(" "), "Mod+Space")).toBe(false);
     });
 
     it("never matches an undefined or empty spec (a disabled binding)", () => {
@@ -83,5 +97,9 @@ describe("toAriaKeyShortcuts", () => {
         expect(toAriaKeyShortcuts("Ctrl+Delete")).toBe("Control+Delete");
         expect(toAriaKeyShortcuts("F2")).toBe("F2");
         expect(toAriaKeyShortcuts(undefined)).toBeUndefined();
+    });
+
+    it("spells Mod as the platform modifier", () => {
+        expect(toAriaKeyShortcuts("Mod+Space")).toBe(isApplePlatform() ? "Meta+Space" : "Control+Space");
     });
 });

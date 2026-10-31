@@ -33,6 +33,7 @@
   --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
   --fl-color-tab-selected: var(--flexlayout-color-tab-selected, var(--fl-color-text));
   --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-4));
+  --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(147, 197, 253, 0.2));
   --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, gray);
   --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
   --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -551,6 +552,9 @@
   background-color: var(--fl-color-tab-unselected-background);
   color: var(--fl-color-tab-unselected);
 }
+.flexlayout__tab_button--multi-selected {
+  background-image: linear-gradient(var(--fl-color-tab-multi-selected-background), var(--fl-color-tab-multi-selected-background));
+}
 .flexlayout__tab_button_leading {
   display: flex;
 }
@@ -773,6 +777,9 @@
 .flexlayout__border_button--unselected {
   background-color: var(--fl-color-border-tab-unselected-background);
   color: var(--fl-color-border-tab-unselected);
+}
+.flexlayout__border_button--multi-selected {
+  background-image: linear-gradient(var(--fl-color-tab-multi-selected-background), var(--fl-color-tab-multi-selected-background));
 }
 .flexlayout__border_button_leading {
   display: flex;

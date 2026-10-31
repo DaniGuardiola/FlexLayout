@@ -65,8 +65,18 @@ export function matchesKey(event: IKeyEventLike, spec: string | undefined): bool
     }
     const parts = spec.split("+");
     const key = parts.pop()!;
-    const has = (mod: string) => parts.some((p) => p.toLowerCase() === mod);
-    return event.key.toLowerCase() === key.toLowerCase() && event.ctrlKey === has("ctrl") && event.shiftKey === has("shift") && event.altKey === has("alt") && event.metaKey === has("meta");
+    const platformMod = isApplePlatform() ? "meta" : "ctrl";
+    const has = (mod: string) => parts.some((p) => p.toLowerCase() === mod || (p.toLowerCase() === "mod" && mod === platformMod));
+    return normalizeKey(event.key) === normalizeKey(key) && event.ctrlKey === has("ctrl") && event.shiftKey === has("shift") && event.altKey === has("alt") && event.metaKey === has("meta");
+}
+
+function normalizeKey(key: string) {
+    return key === " " ? "space" : key.toLowerCase();
+}
+
+/** @internal true on macOS and iOS, where the Mod key spec modifier means Meta (Cmd) */
+export function isApplePlatform() {
+    return typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform ?? "");
 }
 
 /** @internal true when any modifier key is held; the fixed ARIA pattern keys (arrows on tabs and
@@ -83,7 +93,7 @@ export function resolveKeyMap(keyMap: IKeyMap | undefined): IKeyMap {
 
 /** @internal */
 export function toAriaKeyShortcuts(spec: string | undefined) {
-    return spec?.replace(/\bctrl\b/i, "Control"); // the aria-keyshortcuts attribute spells it "Control"
+    return spec?.replace(/\bmod\b/i, isApplePlatform() ? "Meta" : "Control").replace(/\bctrl\b/i, "Control"); // the aria-keyshortcuts attribute spells it "Control"
 }
 
 /** @internal */

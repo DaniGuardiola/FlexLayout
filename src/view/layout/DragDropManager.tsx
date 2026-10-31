@@ -102,7 +102,17 @@ export class DragDropManager {
     }
 
     setDragNode = (event: DragEvent, node: Node & IDraggable) => {
-        DragDropManager.dragState = new DragState(this._controller.getMainController()!, DragSource.Internal, node, undefined, undefined);
+        // dragging a tab of the tab selection drags the whole selection, grabbed tab first
+        let dragNodes: TabNode[] | undefined = undefined;
+        if (node instanceof TabNode) {
+            dragNodes = [node];
+            if (this._controller.isTabMultiSelected(node)) {
+                const model = this._controller.getModel();
+                const others = this._controller.getSelectedTabIds().filter((id) => id !== node.getId());
+                dragNodes.push(...others.map((id) => model.getNodeById(id) as TabNode));
+            }
+        }
+        DragDropManager.dragState = new DragState(this._controller.getMainController()!, DragSource.Internal, node, undefined, undefined, false, undefined, undefined, dragNodes);
         event.dataTransfer!.setData("text/plain", "--flexlayout--");
         event.dataTransfer!.effectAllowed = "copyMove";
         event.dataTransfer!.dropEffect = "move";
@@ -141,6 +151,19 @@ export class DragDropManager {
             if (!rendered) {
                 this.setDragComponent(event, content, 10, 10);
             }
+        } else if (dragNodes !== undefined && dragNodes.length > 1) {
+            let rendered = false;
+            const content = this._controller.i18nName(I18nLabel.Move_Tabs).replace("?", String(dragNodes.length));
+            if (this._controller.getProps().onRenderDragRect) {
+                const dragComponent = this._controller.getProps().onRenderDragRect!(content, node, undefined, dragNodes);
+                if (dragComponent) {
+                    this.setDragComponent(event, dragComponent, 10, 10);
+                    rendered = true;
+                }
+            }
+            if (!rendered) {
+                this.setDragComponent(event, content, 10, 10);
+            }
         } else {
             const element = event.target as HTMLElement;
             if (element && typeof element.getBoundingClientRect === "function") {
@@ -156,7 +179,7 @@ export class DragDropManager {
                 let rendered = false;
                 if (this._controller.getProps().onRenderDragRect) {
                     const content = <TabButtonStamp key={node.getId()} controller={this._controller} tabNode={node as TabNode} />;
-                    const dragComponent = this._controller.getProps().onRenderDragRect!(content, node, undefined);
+                    const dragComponent = this._controller.getProps().onRenderDragRect!(content, node, undefined, dragNodes);
                     if (dragComponent) {
                         this.setDragComponent(event, dragComponent, x, y);
                         rendered = true;
@@ -430,6 +453,9 @@ export class DragDropManager {
                 } else if (dragState.dragNode !== undefined) {
                     if (dragState.dockFloatToMain) {
                         this._controller.doAction(Actions.dockFloatToLayout(dragState.floatLayoutId!, this._dropInfo.node.getId(), this._dropInfo.location, this._dropInfo.index));
+                    } else if (dragState.dragNodes !== undefined && dragState.dragNodes.length > 1) {
+                        const dragNodeIds = dragState.dragNodes.map((tab) => tab.getId());
+                        this._controller.doAction(Actions.moveNodes(dragNodeIds, this._dropInfo.node.getId(), this._dropInfo.location, this._dropInfo.index));
                     } else {
                         this._controller.doAction(Actions.moveNode(dragState.dragNode.getId(), this._dropInfo.node.getId(), this._dropInfo.location, this._dropInfo.index));
                     }
@@ -469,6 +495,8 @@ export class DragState {
     readonly floatLayoutId: string | undefined;
     // the floating panel window the drag came from; drops over it are rejected
     readonly sourceFloatElement: Element | undefined;
+    // the tabs moved by an internal tab drag, the grabbed tab first
+    readonly dragNodes: TabNode[] | undefined;
 
     constructor(
         mainLayoutController: LayoutController,
@@ -479,6 +507,7 @@ export class DragState {
         dockFloatToMain: boolean = false,
         floatLayoutId: string | undefined = undefined,
         sourceFloatElement: Element | undefined = undefined,
+        dragNodes: TabNode[] | undefined = undefined,
     ) {
         this.mainLayoutController = mainLayoutController;
         this.dragSource = dragSource;
@@ -488,5 +517,6 @@ export class DragState {
         this.dockFloatToMain = dockFloatToMain;
         this.floatLayoutId = floatLayoutId;
         this.sourceFloatElement = sourceFloatElement;
+        this.dragNodes = dragNodes;
     }
 }

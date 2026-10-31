@@ -51,8 +51,18 @@ export const BorderButton = (props: IBorderButtonProps) => {
         controller.showContextMenu(tabNode, event);
     };
 
-    const onClick = () => {
+    const onClick = (event?: React.MouseEvent<HTMLElement>) => {
+        if (event !== undefined && controller.tabSelectionClick(tabNode, event)) {
+            return;
+        }
         controller.doAction(Actions.selectTab(tabNode.getId()));
+    };
+
+    const extendTabSelection = (delta: number) => {
+        const next = controller.extendTabSelection(tabNode, delta);
+        if (next !== undefined) {
+            selfRef.current?.ownerDocument.getElementById(domId("flexlayout-tabbutton-", next.getId()))?.focus();
+        }
     };
 
     const focusAdjacentTab = (delta: number) => {
@@ -82,6 +92,15 @@ export const BorderButton = (props: IBorderButtonProps) => {
         }
         if (matchesKey(event, keyMap.focusTabToggle)) {
             focusTabContent();
+            event.preventDefault();
+        } else if (matchesKey(event, keyMap.toggleTabSelection)) {
+            controller.tabSelectionClick(tabNode, { shiftKey: false, ctrlKey: true, metaKey: false });
+            event.preventDefault();
+        } else if (matchesKey(event, keyMap.extendTabSelectionPrevious)) {
+            extendTabSelection(-1);
+            event.preventDefault();
+        } else if (matchesKey(event, keyMap.extendTabSelectionNext)) {
+            extendTabSelection(1);
             event.preventDefault();
         } else if (event.key === "Enter" || event.key === " ") {
             onClick();
@@ -191,6 +210,10 @@ export const BorderButton = (props: IBorderButtonProps) => {
         classNames += " " + cm(CLASSES.FLEXLAYOUT__BORDER_BUTTON__UNSELECTED);
     }
 
+    if (controller.isTabMultiSelected(tabNode)) {
+        classNames += " " + cm(CLASSES.FLEXLAYOUT__BORDER_BUTTON__MULTI_SELECTED);
+    }
+
     const groupNode = tabNode.getParent() instanceof TabGroupNode ? (tabNode.getParent() as TabGroupNode) : undefined;
     if (groupNode !== undefined) {
         classNames += " " + cm(CLASSES.FLEXLAYOUT__TAB_BUTTON_GROUPED);
@@ -253,7 +276,16 @@ export const BorderButton = (props: IBorderButtonProps) => {
     }
 
     // aria-keyshortcuts from the resolved keymap
-    const ariaKeyshortcuts = [toAriaKeyShortcuts(keyMap.focusTabToggle), tabNode.isCloseable() ? toAriaKeyShortcuts(keyMap.closeTab) : undefined].filter(Boolean).join(" ") || undefined;
+    const ariaKeyshortcuts =
+        [
+            toAriaKeyShortcuts(keyMap.focusTabToggle),
+            tabNode.isCloseable() ? toAriaKeyShortcuts(keyMap.closeTab) : undefined,
+            toAriaKeyShortcuts(keyMap.toggleTabSelection),
+            toAriaKeyShortcuts(keyMap.extendTabSelectionPrevious),
+            toAriaKeyShortcuts(keyMap.extendTabSelectionNext),
+        ]
+            .filter(Boolean)
+            .join(" ") || undefined;
 
     const style: React.CSSProperties = {};
     if (groupNode !== undefined) {

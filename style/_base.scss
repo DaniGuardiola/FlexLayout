@@ -583,6 +583,10 @@
                     color: var(--fl-color-tab-unselected);
                 }
 
+                &--multi-selected {
+                    background-image: linear-gradient(var(--fl-color-tab-multi-selected-background), var(--fl-color-tab-multi-selected-background));
+                }
+
                 &_top {}
 
                 &_bottom {}
@@ -865,6 +869,10 @@
                 &--unselected {
                     background-color: var(--fl-color-border-tab-unselected-background);
                     color: var(--fl-color-border-tab-unselected);
+                }
+
+                &--multi-selected {
+                    background-image: linear-gradient(var(--fl-color-tab-multi-selected-background), var(--fl-color-tab-multi-selected-background));
                 }
 
                 &_leading {

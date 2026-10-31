@@ -90,6 +90,10 @@ export class LayoutController {
     // change altering the tabstrip height without resizing the layout root) re-measure the layout
     private _geometryResizeObserver: ResizeObserver | undefined;
     private _splitterDragging: boolean = false;
+    // the multi-selected tab ids (two or more, in document order) and the tab that ranges start
+    // from, held by the main controller for all its layouts
+    private _selectedTabIds: string[] = [];
+    private _tabSelectionAnchorId: string | undefined = undefined;
 
     constructor(
         props: ILayoutInternalProps,
@@ -274,6 +278,10 @@ export class LayoutController {
                     break;
                 }
             }
+        }
+
+        if (this._selectedTabIds.length > 0) {
+            this.setSelectedTabIds(this._selectedTabIds); // drops deleted tabs
         }
 
         if (action.isAdjusting() && (action.type === Actions.ADJUST_WEIGHTS || action.type === Actions.ADJUST_BORDER_SPLIT)) {
@@ -983,6 +991,108 @@ export class LayoutController {
     getEditingTab() {
         return this._state.editingTab;
     }
+
+    getSelectedTabIds(): string[] {
+        return this._mainController!._selectedTabIds;
+    }
+
+    isTabMultiSelected(tabNode: TabNode) {
+        return this.getSelectedTabIds().includes(tabNode.getId());
+    }
+
+    // replaces the tab selection; unknown ids are dropped and fewer than two tabs clear it
+    setSelectedTabIds(tabIds: string[]) {
+        const main = this._mainController!;
+        const model = this._props.model;
+        const tabs = model.sortTabsInDocumentOrder(tabIds.map((id) => model.getNodeById(id)).filter((node): node is TabNode => node instanceof TabNode));
+        const ids = tabs.length > 1 ? tabs.map((tab) => tab.getId()) : [];
+        if (ids.length === main._selectedTabIds.length && ids.every((id, i) => id === main._selectedTabIds[i])) {
+            return;
+        }
+        main._selectedTabIds = ids;
+        this.redrawLayout();
+        main._props.onTabSelectionChange?.(ids);
+    }
+
+    // the tab ranges start from: the last clicked tab, else the shown tab of the active tabset
+    private getTabSelectionAnchor(tabNode: TabNode): TabNode | undefined {
+        const anchor = this._props.model.getNodeById(this._mainController!._tabSelectionAnchorId ?? "");
+        if (anchor instanceof TabNode) {
+            return anchor;
+        }
+        return this._props.model.getActiveTabset(tabNode.getLayoutId())?.getSelectedNode() as TabNode | undefined;
+    }
+
+    private getTabRange(from: TabNode, to: TabNode) {
+        const tabs = to.getTabContainer().getTabNodes();
+        const fromIndex = tabs.indexOf(from);
+        const toIndex = tabs.indexOf(to);
+        return tabs.slice(Math.min(fromIndex, toIndex), Math.max(fromIndex, toIndex) + 1).map((tab) => tab.getId());
+    }
+
+    // updates the tab selection for a click on a tab button; returns true when the click was a
+    // selection click (Cmd/Ctrl or Shift) that must not show the tab
+    tabSelectionClick(tabNode: TabNode, event: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }): boolean {
+        const main = this._mainController!;
+        const toggle = event.ctrlKey || event.metaKey;
+        const selected = this.getSelectedTabIds();
+        if (event.shiftKey) {
+            let anchor = this.getTabSelectionAnchor(tabNode);
+            if (anchor === undefined || anchor.getTabContainer() !== tabNode.getTabContainer()) {
+                // ranges never reach across tabsets: start a new range from this tabset's shown tab
+                anchor = tabNode.getTabContainer().getSelectedNode() ?? tabNode;
+                main._tabSelectionAnchorId = anchor.getId();
+            }
+            const range = this.getTabRange(anchor, tabNode);
+            this.setSelectedTabIds(toggle ? [...selected, ...range] : range);
+            return true;
+        }
+        if (toggle) {
+            if (selected.length === 0) {
+                const anchor = this.getTabSelectionAnchor(tabNode);
+                this.setSelectedTabIds(anchor ? [anchor.getId(), tabNode.getId()] : []);
+            } else if (selected.includes(tabNode.getId())) {
+                this.setSelectedTabIds(selected.filter((id) => id !== tabNode.getId()));
+            } else {
+                this.setSelectedTabIds([...selected, tabNode.getId()]);
+            }
+            main._tabSelectionAnchorId = tabNode.getId();
+            return true;
+        }
+        main._tabSelectionAnchorId = tabNode.getId();
+        this.setSelectedTabIds([]);
+        return false;
+    }
+
+    // extends the tab selection from the anchor (or the given tab) to its neighbour in the given
+    // direction; returns the neighbour to move focus to
+    extendTabSelection(tabNode: TabNode, delta: number): TabNode | undefined {
+        const main = this._mainController!;
+        const tabs = tabNode.getTabContainer().getTabNodes();
+        const next = tabs[tabs.indexOf(tabNode) + delta];
+        if (next === undefined) {
+            return undefined;
+        }
+        const anchor = this.getTabSelectionAnchor(tabNode);
+        if (anchor === undefined || anchor.getTabContainer() !== tabNode.getTabContainer() || !this.isTabMultiSelected(tabNode)) {
+            main._tabSelectionAnchorId = tabNode.getId();
+        }
+        this.setSelectedTabIds(this.getTabRange(this.getTabSelectionAnchor(tabNode)!, next));
+        return next;
+    }
+
+    onLayoutPointerDown = (event: React.PointerEvent<HTMLElement>) => {
+        const target = event.target as Element;
+        if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !target.closest?.('[id^="flexlayout-tabbutton-"]')) {
+            this.setSelectedTabIds([]);
+        }
+    };
+
+    onTabSelectionKeyDown = (event: KeyboardEvent) => {
+        if (!event.defaultPrevented && matchesKey(event, this.getKeyMap().clearTabSelection)) {
+            this.setSelectedTabIds([]);
+        }
+    };
 
     getModel() {
         return this._props.model;

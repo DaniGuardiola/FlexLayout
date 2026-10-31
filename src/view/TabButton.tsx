@@ -79,9 +79,19 @@ export const TabButton = (props: ITabButtonProps) => {
         controller.showContextMenu(tabNode, event);
     };
 
-    const onClick = () => {
+    const onClick = (event?: React.MouseEvent<HTMLElement>) => {
+        if (event !== undefined && controller.tabSelectionClick(tabNode, event)) {
+            return;
+        }
         if (!tabNode.isSelected()) {
             controller.doAction(Actions.selectTab(tabNode.getId()));
+        }
+    };
+
+    const extendTabSelection = (delta: number) => {
+        const next = controller.extendTabSelection(tabNode, delta);
+        if (next !== undefined) {
+            selfRef.current?.ownerDocument.getElementById(domId("flexlayout-tabbutton-", next.getId()))?.focus();
         }
     };
 
@@ -112,6 +122,15 @@ export const TabButton = (props: ITabButtonProps) => {
         }
         if (matchesKey(event, keyMap.focusTabToggle)) {
             focusTabContent();
+            event.preventDefault();
+        } else if (matchesKey(event, keyMap.toggleTabSelection)) {
+            controller.tabSelectionClick(tabNode, { shiftKey: false, ctrlKey: true, metaKey: false });
+            event.preventDefault();
+        } else if (matchesKey(event, keyMap.extendTabSelectionPrevious)) {
+            extendTabSelection(-1);
+            event.preventDefault();
+        } else if (matchesKey(event, keyMap.extendTabSelectionNext)) {
+            extendTabSelection(1);
             event.preventDefault();
         } else if (event.key === "Enter" || event.key === " ") {
             if (selected) {
@@ -208,6 +227,10 @@ export const TabButton = (props: ITabButtonProps) => {
         classNames += " " + cm(baseClassName + "--pinned");
     }
 
+    if (controller.isTabMultiSelected(tabNode)) {
+        classNames += " " + cm(CLASSES.FLEXLAYOUT__TAB_BUTTON__MULTI_SELECTED);
+    }
+
     if (groupNode !== undefined) {
         classNames += " " + cm(CLASSES.FLEXLAYOUT__TAB_BUTTON_GROUPED);
         if (tabNode.getModel().getTabGroupType() === "underline") {
@@ -230,6 +253,9 @@ export const TabButton = (props: ITabButtonProps) => {
             toAriaKeyShortcuts(keyMap.focusTabToggle),
             tabNode.isCloseable() ? toAriaKeyShortcuts(keyMap.closeTab) : undefined,
             tabNode.isEnableRename() ? toAriaKeyShortcuts(keyMap.renameTab) : undefined,
+            toAriaKeyShortcuts(keyMap.toggleTabSelection),
+            toAriaKeyShortcuts(keyMap.extendTabSelectionPrevious),
+            toAriaKeyShortcuts(keyMap.extendTabSelectionNext),
         ]
             .filter(Boolean)
             .join(" ") || undefined;

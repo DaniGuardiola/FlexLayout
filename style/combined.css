@@ -33,6 +33,7 @@
   --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
   --fl-color-tab-selected: var(--flexlayout-color-tab-selected, var(--fl-color-text));
   --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-4));
+  --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14));
   --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, gray);
   --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
   --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -100,6 +101,7 @@
   --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
   --fl-color-tab-selected: var(--flexlayout-color-tab-selected, var(--fl-color-text));
   --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-4));
+  --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(147, 197, 253, 0.2));
   --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, gray);
   --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
   --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -167,6 +169,7 @@
   --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
   --fl-color-tab-selected: var(--flexlayout-color-tab-selected, var(--fl-color-text));
   --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-3));
+  --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14));
   --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, gray);
   --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
   --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -234,6 +237,7 @@
   --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
   --fl-color-tab-selected: var(--flexlayout-color-tab-selected, var(--fl-color-text));
   --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, transparent);
+  --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14));
   --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, gray);
   --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
   --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -304,6 +308,7 @@
   --fl-color-tab-content: var(--flexlayout-color-tab-content, white);
   --fl-color-tab-selected: var(--flexlayout-color-tab-selected, var(--fl-color-text));
   --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-2));
+  --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14));
   --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, gray);
   --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, #d3d4e745);
   --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -373,6 +378,7 @@
   --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
   --fl-color-tab-selected: var(--flexlayout-color-tab-selected, #3b7de7);
   --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-background));
+  --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14));
   --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, var(--fl-color-5));
   --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
   --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -442,6 +448,7 @@
   --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
   --fl-color-tab-selected: var(--flexlayout-color-tab-selected, #e5e7eb);
   --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-background));
+  --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(147, 197, 253, 0.2));
   --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, var(--fl-color-5));
   --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
   --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -511,6 +518,7 @@
   --fl-color-tab-content: var(--flexlayout-color-tab-content, white);
   --fl-color-tab-selected: var(--flexlayout-color-tab-selected, #3b7de7);
   --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-2));
+  --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14));
   --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, var(--fl-color-4));
   --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, var(--fl-color-1));
   --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -580,6 +588,7 @@
   --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
   --fl-color-tab-selected: var(--flexlayout-color-tab-selected, #3b7de7);
   --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-background));
+  --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14));
   --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, var(--fl-color-5));
   --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
   --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -1106,6 +1115,9 @@
   background-color: var(--fl-color-tab-unselected-background);
   color: var(--fl-color-tab-unselected);
 }
+.flexlayout__tab_button--multi-selected {
+  background-image: linear-gradient(var(--fl-color-tab-multi-selected-background), var(--fl-color-tab-multi-selected-background));
+}
 .flexlayout__tab_button_leading {
   display: flex;
 }
@@ -1328,6 +1340,9 @@
 .flexlayout__border_button--unselected {
   background-color: var(--fl-color-border-tab-unselected-background);
   color: var(--fl-color-border-tab-unselected);
+}
+.flexlayout__border_button--multi-selected {
+  background-image: linear-gradient(var(--fl-color-tab-multi-selected-background), var(--fl-color-tab-multi-selected-background));
 }
 .flexlayout__border_button_leading {
   display: flex;

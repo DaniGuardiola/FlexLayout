@@ -40,6 +40,11 @@ export interface ILayoutProps {
     ) => void;
     /** function called when model has changed */
     onModelChange?: (model: Model, action: Action) => void;
+    /** function called when the tab selection changes (the tabs picked with Cmd/Ctrl or Shift
+     * clicks to be moved together), with the selected tab ids in document order; an empty array
+     * means no selection. A selection always holds at least two tabs, it is view state that is
+     * not stored in the model */
+    onTabSelectionChange?: (tabIds: string[]) => void;
     /** Handle external drag-and-drop onto the layout. Return undefined to reject. */
     onExternalDrag?: (event: React.DragEvent<HTMLElement>) =>
         | undefined
@@ -160,6 +165,18 @@ export interface ILayoutApi {
      */
     editTabName(tabNodeId: string): void;
 
+    /**
+     * Gets the tab selection (the tabs picked with Cmd/Ctrl or Shift clicks to be moved together)
+     * @returns the selected tab ids in document order, empty when there is no selection
+     */
+    getSelectedTabIds(): string[];
+
+    /**
+     * Replaces the tab selection; unknown ids are ignored and fewer than two tabs clear it
+     * @param tabIds the ids of the tab nodes to select, pass an empty array to clear the selection
+     */
+    setSelectedTabIds(tabIds: string[]): void;
+
     /** Get the root div element of the layout */
     getRootDiv(): HTMLDivElement | null | undefined;
 }
@@ -219,6 +236,12 @@ const Layout = React.forwardRef<ILayoutApi, ILayoutProps>((props, ref) => {
             if (node instanceof TabNode && node.isEnableRename()) {
                 getViewController(node.getLayout())?.setEditingTab(node);
             }
+        },
+        getSelectedTabIds: (): string[] => {
+            return [...(controllerRef.current?.getSelectedTabIds() ?? [])];
+        },
+        setSelectedTabIds: (tabIds: string[]) => {
+            controllerRef.current?.setSelectedTabIds(tabIds);
         },
         getRootDiv: () => {
             return controllerRef.current!.getRootDiv();

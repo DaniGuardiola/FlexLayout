@@ -163,6 +163,7 @@ export const LayoutInternal = React.forwardRef<LayoutController, ILayoutInternal
         // tabset cycling keys (document-wide per layout window)
         if (controller.isMainLayout() || controller.getLayout()?.getType() === "window") {
             currentDocument.addEventListener("keydown", controller.onTabsetNavKeyDown);
+            currentDocument.addEventListener("keydown", controller.onTabSelectionKeyDown);
         }
 
         return () => {
@@ -173,6 +174,7 @@ export const LayoutInternal = React.forwardRef<LayoutController, ILayoutInternal
             currentDocument.removeEventListener("pointerdown", controller.onOverlayBorderPointerDown, true);
             currentDocument.removeEventListener("keydown", controller.onOverlayBorderKeyDown);
             currentDocument.removeEventListener("keydown", controller.onTabsetNavKeyDown);
+            currentDocument.removeEventListener("keydown", controller.onTabSelectionKeyDown);
         };
         // documentVersion re-runs when the element moves to another document
     }, [controller, documentVersion]);
@@ -290,6 +292,7 @@ export const LayoutInternal = React.forwardRef<LayoutController, ILayoutInternal
             onDragLeave={controller.getDragDropManager().onDragLeaveRaw}
             onDragOver={controller.getDragDropManager().onDragOver}
             onDrop={controller.getDragDropManager().onDrop}
+            onPointerDown={controller.onLayoutPointerDown}
         >
             {metrics}
             {moveablesHome}

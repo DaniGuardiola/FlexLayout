@@ -6,7 +6,8 @@ import { Node } from "../../model/Node";
 import { TabNode } from "../../model/TabNode";
 import { TabSetNode } from "../../model/TabSetNode";
 
-export type DragRectRenderCallback = (content: React.ReactNode | undefined, node?: Node, json?: IJsonTabNode) => React.ReactNode | undefined;
+/** renders the drag rectangle; when dragging tabs, nodes holds every dragged tab with the grabbed tab (node) first */
+export type DragRectRenderCallback = (content: React.ReactNode | undefined, node?: Node, json?: IJsonTabNode, nodes?: TabNode[]) => React.ReactNode | undefined;
 
 export type NodeMouseEvent = (node: TabNode | TabSetNode | BorderNode | TabGroupNode, event: React.MouseEvent<HTMLElement, MouseEvent>) => void;
 
@@ -42,8 +43,8 @@ export interface ITabRenderValues {
 }
 
 /** Keyboard bindings for the layout's command shortcuts, each given as a key spec such as
- * "F2", "Escape" or "Ctrl+Delete" (a KeyboardEvent.key name, optionally prefixed by
- * modifiers Ctrl, Shift, Alt, Meta joined with +).
+ * "F2", "Escape" or "Ctrl+Delete" (a KeyboardEvent.key name or Space, optionally prefixed by
+ * modifiers Ctrl, Shift, Alt, Meta joined with +; Mod is Meta on Apple platforms and Ctrl elsewhere).
  *
  * Bindings given in the Layout keyMap prop are merged over defaultKeyMap; passing an explicit
  * undefined for a binding disables that shortcut. The bindings are advertised to assistive
@@ -74,6 +75,17 @@ export interface IKeyMap {
      * returns focus to the tab button. Escape-to-dismiss is an ARIA convention, so overriding
      * this is rarely a good idea, but it can be rebound or disabled like the other commands */
     closeOverlayBorder?: string;
+    /** extends the tab selection from the focused tab button to the previous tab in its tabset
+     * or border, moving focus there */
+    extendTabSelectionPrevious?: string;
+    /** extends the tab selection from the focused tab button to the next tab in its tabset or
+     * border, moving focus there */
+    extendTabSelectionNext?: string;
+    /** adds the focused tab button's tab to the tab selection or removes it (a selection always
+     * holds at least two tabs) */
+    toggleTabSelection?: string;
+    /** clears the tab selection */
+    clearTabSelection?: string;
 }
 
 /** the default keyboard bindings, exported so applications can display or re-register them */
@@ -84,6 +96,10 @@ export const defaultKeyMap: Readonly<IKeyMap> = {
     focusNextTabset: undefined,
     focusPreviousTabset: undefined,
     closeOverlayBorder: "Escape",
+    extendTabSelectionPrevious: "Shift+ArrowLeft",
+    extendTabSelectionNext: "Shift+ArrowRight",
+    toggleTabSelection: "Mod+Space",
+    clearTabSelection: "Escape",
 };
 
 export interface IIcons {

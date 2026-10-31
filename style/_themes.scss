@@ -61,6 +61,7 @@
             --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
             --fl-color-tab-selected: var(--flexlayout-color-tab-selected, var(--fl-color-text));
             --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-4));
+            --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14)); // tint over the background of multi-selected tab buttons
             --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, gray);
             --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
             --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -172,6 +173,7 @@
             --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
             --fl-color-tab-selected: var(--flexlayout-color-tab-selected, var(--fl-color-text));
             --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-4));
+            --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(147, 197, 253, 0.2)); // tint over the background of multi-selected tab buttons
             --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, gray);
             --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
             --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -308,6 +310,7 @@
             --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
             --fl-color-tab-selected: var(--flexlayout-color-tab-selected, var(--fl-color-text));
             --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-3));
+            --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14)); // tint over the background of multi-selected tab buttons
             --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, gray);
             --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
             --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -445,6 +448,7 @@
             --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
             --fl-color-tab-selected: var(--flexlayout-color-tab-selected, var(--fl-color-text));
             --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, transparent);
+            --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14)); // tint over the background of multi-selected tab buttons
             --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, gray);
             --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
             --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -599,6 +603,7 @@
             --fl-color-tab-content: var(--flexlayout-color-tab-content, white);
             --fl-color-tab-selected: var(--flexlayout-color-tab-selected, var(--fl-color-text));
             --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-2));
+            --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14)); // tint over the background of multi-selected tab buttons
             --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, gray);
             --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, #d3d4e745);
             --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -771,6 +776,7 @@
             --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
             --fl-color-tab-selected: var(--flexlayout-color-tab-selected, #3b7de7);
             --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-background));
+            --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14)); // tint over the background of multi-selected tab buttons
             --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, var(--fl-color-5));
             --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
             --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -1036,6 +1042,7 @@
             --fl-color-tab-content: var(--flexlayout-color-tab-content, var(--fl-color-background));
             --fl-color-tab-selected: var(--flexlayout-color-tab-selected, #e5e7eb);
             --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-background));
+            --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(147, 197, 253, 0.2)); // tint over the background of multi-selected tab buttons
             --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, var(--fl-color-5));
             --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, transparent);
             --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
@@ -1286,6 +1293,7 @@
             --fl-color-tab-content: var(--flexlayout-color-tab-content, white);
             --fl-color-tab-selected: var(--flexlayout-color-tab-selected, #3b7de7);
             --fl-color-tab-selected-background: var(--flexlayout-color-tab-selected-background, var(--fl-color-2));
+            --fl-color-tab-multi-selected-background: var(--flexlayout-color-tab-multi-selected-background, rgba(59, 125, 231, 0.14)); // tint over the background of multi-selected tab buttons
             --fl-color-tab-unselected: var(--flexlayout-color-tab-unselected, var(--fl-color-4));
             --fl-color-tab-unselected-background: var(--flexlayout-color-tab-unselected-background, var(--fl-color-1));
             --fl-color-tab-textbox: var(--flexlayout-color-tab-textbox, var(--fl-color-text));
