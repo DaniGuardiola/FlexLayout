@@ -616,6 +616,28 @@ This adds a new grid component to the tabset with ID "NAVIGATION". (where `layou
 
 See [External Drag](https://caplin.github.io/FlexLayout/demos/v0.11/examples/external-drag/) — `examples/external-drag/ExternalDrag.tsx` and [Sticky Button](https://caplin.github.io/FlexLayout/demos/v0.11/examples/sticky-button/) — `examples/sticky-button/StickyButton.tsx`.
 
+## Finding Nodes and Their Elements
+
+The Layout Ref also maps between the model and the rendered elements, so application code (focus management, custom keys, highlighting) does not need to rely on the layout's internal element ids or class names:
+
+```tsx
+const layoutRef = React.useRef<ILayoutApi>(null);
+
+<Layout ref={layoutRef} model={model} factory={factory} />;
+
+// the tab, tabset or border an element belongs to, e.g. an event target
+const node = layoutRef.current!.getNodeForElement(event.target as Element);
+
+// the element rendered for a node (or node id)
+layoutRef.current!.getElementForNode("tab1")?.focus(); // the tab's button
+layoutRef.current!.getElementForNode("tab1", "panel"); // the tab's panel, which holds its content
+layoutRef.current!.getElementForNode("tabset1"); // the tabset (tab strip, toolbar and content area)
+```
+
+* `getNodeForElement(element)` walks up from the element and returns the `TabNode` whose button or panel holds it (including anything inside the tab's content), else the `TabSetNode` or `BorderNode` whose element holds it (e.g. the tab strip or toolbar), else `undefined` (e.g. splitters, or elements outside the layout). Tab content is rendered in a layer of its own, not inside its tabset's element, so content maps to its tab; use `getParent()` for the tabset.
+* `getElementForNode(node, part?)` takes a node or a node id. For a tab, `part` picks its button (`"button"`, the default) or its panel (`"panel"`); a tabset gives its `flexlayout__tabset` element and a border its tab bar. It returns `undefined` for ids not in the model, other node types, and elements not currently rendered (e.g. the panel of a tab whose content has not been rendered yet with `enableRenderOnDemand`).
+* Both cover every window: the main layout, floating panels and popout windows. Elements in a popout window belong to that window's document.
+
 
 ## Tab Node Events
 

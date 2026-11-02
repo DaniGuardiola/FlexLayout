@@ -1266,6 +1266,53 @@ export class LayoutController {
         return this._layoutRef.current;
     }
 
+    // the tab whose button or panel holds the element, else the tabset or border whose own element
+    // holds it, in any of the model's layouts (the main layout, floating panels and popout windows)
+    getNodeForElement(element: Element): TabNode | TabSetNode | BorderNode | undefined {
+        const nodes = new Map<Element, TabNode | TabSetNode | BorderNode>();
+        for (const [, layout] of this._props.model.getLayouts()) {
+            const controller = getViewController(layout);
+            if (!controller) {
+                continue;
+            }
+            for (const { kind, node, element } of controller._measurables.values()) {
+                if (kind === "tabbutton" || kind === "tabset" || kind === "borderheader" || kind === "bordercontent") {
+                    nodes.set(element, node as TabNode | TabSetNode | BorderNode);
+                }
+            }
+            for (const { node, element } of controller._tabPanels.values()) {
+                nodes.set(element, node);
+            }
+        }
+        for (let current: Element | null = element; current; current = current.parentElement) {
+            const node = nodes.get(current);
+            if (node) {
+                return node;
+            }
+        }
+        return undefined;
+    }
+
+    // a tab's button or panel, a tabset's element or a border's tab bar, in the layout showing it
+    getElementForNode(nodeOrId: Node | string, part: "button" | "panel" = "button"): HTMLElement | undefined {
+        const node = this._props.model.getNodeById(typeof nodeOrId === "string" ? nodeOrId : nodeOrId.getId());
+        const controller = node && getViewController(node.getLayout());
+        if (!controller) {
+            return undefined;
+        }
+        if (node instanceof TabNode) {
+            return part === "panel" ? controller._tabPanels.get(node.getId())?.element : controller._measurables.get("tabbutton:" + node.getId())?.element;
+        }
+        if (node instanceof TabSetNode) {
+            // the styled tabset element inside its sizing container
+            return (controller._measurables.get("tabset:" + node.getId())?.element.firstElementChild as HTMLElement | null) ?? undefined;
+        }
+        if (node instanceof BorderNode) {
+            return controller._measurables.get("borderheader:" + node.getId())?.element;
+        }
+        return undefined;
+    }
+
     getMainElement() {
         return this._mainRef.current;
     }

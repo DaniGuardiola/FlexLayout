@@ -196,6 +196,27 @@ export interface ILayoutApi {
 
     /** Get the root div element of the layout */
     getRootDiv(): HTMLDivElement | null | undefined;
+
+    /**
+     * Gets the node an element belongs to, walking up from the element: the tab whose button or
+     * panel (which holds the tab's content) contains it, else the tabset or border whose element
+     * contains it. Covers the main layout, floating panels and popout windows
+     * @param element an element rendered by the layout, e.g. an event target
+     * @returns the tab, tabset or border node, or undefined when the element is outside them (e.g.
+     * a splitter, or an element outside the layout)
+     */
+    getNodeForElement(element: Element): TabNode | TabSetNode | BorderNode | undefined;
+
+    /**
+     * Gets the element rendered for a node, in whichever window shows it: a tab's button (the
+     * default part) or its panel, a tabset's element (tab strip, toolbar and content area) or a
+     * border's tab bar
+     * @param node the node or its id
+     * @param part for tabs, "button" (the default) or "panel"; ignored for other nodes
+     * @returns the element, or undefined when the node is not in the model or not rendered (e.g.
+     * a tab whose content has not been rendered yet, or a row)
+     */
+    getElementForNode(node: Node | string, part?: "button" | "panel"): HTMLElement | undefined;
 }
 
 /**
@@ -262,6 +283,12 @@ const Layout = React.forwardRef<ILayoutApi, ILayoutProps>((props, ref) => {
         },
         getRootDiv: () => {
             return controllerRef.current!.getRootDiv();
+        },
+        getNodeForElement: (element: Element) => {
+            return controllerRef.current?.getNodeForElement(element);
+        },
+        getElementForNode: (node: Node | string, part?: "button" | "panel") => {
+            return controllerRef.current?.getElementForNode(node, part);
         },
     }));
 
