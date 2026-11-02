@@ -59,6 +59,15 @@ export interface ILayoutInternalState {
     showHiddenBorder: DockLocation;
 }
 
+// the clip-path inset that keeps the part of a rect inside the viewport (both relative to the root)
+function clipToViewport(rect: Rect, viewport: Rect) {
+    const top = Math.max(0, viewport.y - rect.y);
+    const left = Math.max(0, viewport.x - rect.x);
+    const bottom = Math.max(0, rect.getBottom() - viewport.getBottom());
+    const right = Math.max(0, rect.getRight() - viewport.getRight());
+    return top || left || bottom || right ? `inset(${top}px ${right}px ${bottom}px ${left}px)` : "";
+}
+
 /** @internal */
 export class LayoutController {
     // WeakMap so closed popout windows can be garbage collected
@@ -72,6 +81,10 @@ export class LayoutController {
     private _findBorderBarSizeRef!: React.RefObject<HTMLDivElement | null>;
     private _findSplitterSizeRef!: React.RefObject<HTMLDivElement | null>;
     private _mainRef!: React.RefObject<HTMLDivElement | null>;
+    // with scrollOnOverflow, the element inside the main area that scrolls the root row, and the
+    // frame that re-measures after a scroll
+    private _scrollerRef: React.RefObject<HTMLDivElement | null> = React.createRef();
+    private _scrollFrame: number | undefined = undefined;
     private _orderedTabIds: string[];
     private _orderedTabMoveableIds: string[];
     private _currentDocument?: Document;
@@ -138,13 +151,81 @@ export class LayoutController {
 
     renderLayout() {
         this._cachedLayoutDOMRect = undefined;
+        const row = <Row key="__row__" controller={this} rowNode={this._props.model.getRootRow(this._layoutId)!} />;
+        if (!this.isScrollOnOverflow()) {
+            return (
+                <>
+                    {row}
+                    <EdgeIndicators controller={this} />
+                </>
+            );
+        }
+        // the root row scrolls inside the main area, which keeps its own size; the edge indicators
+        // and a maximized tabset (portaled into the main element) stay over the visible area
+        const maximized = this._props.model.getMaximizedTabset(this._layoutId) !== undefined;
         return (
             <>
-                <Row key="__row__" controller={this} rowNode={this._props.model.getRootRow(this._layoutId)!} />
+                <div
+                    key="__scroller__"
+                    ref={this._scrollerRef}
+                    className={this.getClassName(CLASSES.FLEXLAYOUT__LAYOUT_MAIN_SCROLLER)}
+                    style={maximized ? { overflow: "hidden" } : undefined}
+                    onScroll={this.onMainScroll}
+                >
+                    {row}
+                </div>
                 <EdgeIndicators controller={this} />
             </>
         );
     }
+
+    // whether the main layout scrolls when its tabsets' minimum sizes no longer fit (the opt-in
+    // scrollOnOverflow prop); floating and popout layouts keep their size
+    isScrollOnOverflow() {
+        return this.isMainLayout() && this._props.scrollOnOverflow === true;
+    }
+
+    // a scroll moves the tabsets but not the tab panels, which sit beside the main area: re-measure
+    // and reposition them once per frame
+    onMainScroll = () => {
+        if (this._scrollFrame !== undefined) {
+            return;
+        }
+        const win = this._currentWindow ?? window;
+        this._scrollFrame = win.requestAnimationFrame(() => {
+            this._scrollFrame = undefined;
+            this.applyMeasuredGeometry();
+        });
+    };
+
+    // the visible part of the main area, relative to the layout root
+    getMainViewportRect(): Rect | undefined {
+        const main = this._mainRef?.current;
+        return main ? this.getBoundingClientRect(main) : undefined;
+    }
+
+    // with scrollOnOverflow, focus moving into a tab panel scrolled (partly) out of view scrolls the
+    // main area just enough to show the focused element; tab buttons sit in the scroller and the
+    // browser scrolls them into view itself, but tab panels sit beside it
+    onLayoutFocus = (event: React.FocusEvent<HTMLElement>) => {
+        const scroller = this._scrollerRef.current;
+        if (!scroller || !this.isScrollOnOverflow() || this._props.model.getMaximizedTabset(this._layoutId) !== undefined) {
+            return;
+        }
+        const target = event.target;
+        const inPanel = [...this._tabPanels.values()].some(({ node, element }) => node.getTabContainer() instanceof TabSetNode && element.contains(target));
+        const viewport = this.getMainViewportRect();
+        if (!inPanel || !viewport) {
+            return;
+        }
+        const box = this.getBoundingClientRect(target);
+        const offset = (start: number, end: number, viewStart: number, viewEnd: number) => (start < viewStart ? start - viewStart : end > viewEnd ? Math.min(end - viewEnd, start - viewStart) : 0);
+        const dx = offset(box.x, box.getRight(), viewport.x, viewport.getRight());
+        const dy = offset(box.y, box.getBottom(), viewport.y, viewport.getBottom());
+        if (dx !== 0 || dy !== 0) {
+            scroller.scrollBy({ left: dx, top: dy, behavior: "instant" });
+        }
+    };
 
     renderTabContainers() {
         const tabs = new Map<string, React.ReactNode>();
@@ -322,7 +403,7 @@ export class LayoutController {
     };
 
     // re-measure, reposition panels, and mount any newly sized content areas
-    private applyMeasuredGeometry() {
+    applyMeasuredGeometry() {
         this.syncLayoutMetrics();
         this.positionTabPanels();
         if (this.isReLayout()) {
@@ -491,7 +572,7 @@ export class LayoutController {
         }
         const x = event.clientX - domRect.x;
         const y = event.clientY - domRect.y;
-        const mainRect = this._props.model.getRootRow(Model.MAIN_LAYOUT_ID)?.getRect();
+        const mainRect = this.getMainViewportRect() ?? this._props.model.getRootRow(Model.MAIN_LAYOUT_ID)?.getRect();
         if (!mainRect || !mainRect.contains(x, y)) {
             return; // border strips and toolbars are outside the root row rect
         }
@@ -1046,9 +1127,13 @@ export class LayoutController {
     // syncLayoutMetrics in the layout effect, replacing the second render that previously applied the
     // measured rects to the panels
     positionTabPanels() {
+        // with scrollOnOverflow the main area's tab panels are clipped to its visible part, so a
+        // tabset scrolled under a border or outside the layout neither shows nor takes the pointer
+        const viewport = this.isScrollOnOverflow() && this._props.model.getMaximizedTabset(this._layoutId) === undefined ? this.getMainViewportRect() : undefined;
         for (const { node, element } of this._tabPanels.values()) {
             const parent = node.getTabContainer();
             const rect = parent.getContentRect();
+            element.style.clipPath = viewport && parent instanceof TabSetNode ? clipToViewport(rect, viewport) : "";
 
             let visible = node.isSelected();
             if (parent instanceof TabSetNode) {

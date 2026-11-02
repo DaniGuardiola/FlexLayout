@@ -1083,8 +1083,9 @@ export class Model {
         this.idMap.set(id, node);
     }
 
-    /** @internal */
-    findDropTargetNode(layoutId: string, dragNode: Node & IDraggable, x: number, y: number, excludeCenter: boolean = false) {
+    /** @internal `viewport`, when given, is the visible part of a scrolled main layout: its tabsets
+     *  only take drops inside it */
+    findDropTargetNode(layoutId: string, dragNode: Node & IDraggable, x: number, y: number, excludeCenter: boolean = false, viewport?: Rect) {
         // an open overlay border panel overlays the main layout, so it must take drop
         // precedence over the tabsets underneath it
         if (layoutId === Model.MAIN_LAYOUT_ID) {
@@ -1097,7 +1098,7 @@ export class Model {
                 }
             }
         }
-        let node = (this.layouts.get(layoutId)?.getRootRow() as RowNode | undefined)?.findDropTargetNode(layoutId, dragNode, x, y, excludeCenter);
+        let node = viewport && !viewport.contains(x, y) ? undefined : (this.layouts.get(layoutId)?.getRootRow() as RowNode | undefined)?.findDropTargetNode(layoutId, dragNode, x, y, excludeCenter);
         if (node === undefined && layoutId === Model.MAIN_LAYOUT_ID) {
             node = this.borders.findDropTargetNode(dragNode, x, y, excludeCenter);
         }

@@ -81,6 +81,13 @@ export interface ILayoutProps {
     supportsPopout?: boolean | undefined;
     /** URL of popout window relative to origin, defaults to popout.html */
     popoutURL?: string | undefined;
+    /** boolean value, defaults to false. When true, the main layout scrolls instead of shrinking
+     * its tabsets below their minimum size (`tabSetMinWidth` / `tabSetMinHeight`, or a tabset's own
+     * `minWidth` / `minHeight`) when they no longer fit: the area inside the borders becomes a
+     * scroll container, while the borders and their tabs stay in place. Tab content follows the
+     * scroll and is clipped to the visible area, drops only land on visible tabsets, and moving
+     * focus into a tabset scrolled out of view scrolls it into view */
+    scrollOnOverflow?: boolean;
     /** boolean value, defaults to false, resize tabs as splitters are dragged. Warning: this can cause resizing to become choppy when tabs are slow to draw */
     realtimeResize?: boolean | undefined;
     /** callback for rendering the drag rectangles */

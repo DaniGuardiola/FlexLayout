@@ -1,5 +1,6 @@
-## Unreleased (dio.la fork, 0.11.1-dio.5)
-* **Changed:** the package version is now `0.11.1-dio.5`.
+## Unreleased (dio.la fork, 0.11.1-dio.6)
+* **Changed:** the package version is now `0.11.1-dio.6`.
+* **Added:** `scrollOnOverflow` Layout prop: the main area scrolls, as a last resort, when its tabsets no longer fit at their minimum sizes, while the borders stay in place; tab content follows the scroll clipped to the visible area, only visible tabsets take drops, and focus moving into a panel out of view scrolls it into view. See README "Scrolling When Tabsets No Longer Fit".
 * **Fixed:** while a tab is being renamed, dragging in its text box selects text instead of dragging the tab or its tabset.
 * **Fixed:** right-clicks, middle clicks and Ctrl+clicks no longer start splitter, float window and tab strip scrollbar drags. The context menu they open swallowed the release, so the drag stayed stuck to the pointer.
 * **Added:** `getNodeForElement(element)` and `getElementForNode(node, part?)` on the Layout ref map between rendered elements and their tab, tabset or border nodes (a tab's button or panel, a tabset's element, a border's tab bar) in the main layout, floating panels and popout windows, so apps need not rely on internal element ids. See README "Finding Nodes and Their Elements".

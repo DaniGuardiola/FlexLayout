@@ -677,6 +677,15 @@
   flex-grow: 1;
   position: relative;
 }
+.flexlayout__layout_main_scroller {
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  position: absolute;
+  display: flex;
+  overflow: auto;
+}
 .flexlayout__layout_border_container {
   display: flex;
   flex-basis: 0px;

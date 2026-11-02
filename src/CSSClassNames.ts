@@ -57,6 +57,7 @@ export enum CLASSES {
     FLEXLAYOUT__LAYOUT_OVERLAY = "flexlayout__layout_overlay",
     FLEXLAYOUT__LAYOUT_TAB_STAMPS = "flexlayout__layout_tab_stamps",
     FLEXLAYOUT__LAYOUT_MAIN = "flexlayout__layout_main",
+    FLEXLAYOUT__LAYOUT_MAIN_SCROLLER = "flexlayout__layout_main_scroller",
     FLEXLAYOUT__LAYOUT_BORDER_CONTAINER = "flexlayout__layout_border_container",
     FLEXLAYOUT__LAYOUT_BORDER_CONTAINER_INNER = "flexlayout__layout_border_container_inner",
 

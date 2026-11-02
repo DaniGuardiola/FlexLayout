@@ -57,6 +57,14 @@
                 flex-grow: 1;
                 position: relative;
             }
+
+            // with scrollOnOverflow, the root row scrolls inside the main area once its minimum
+            // size no longer fits
+            &_main_scroller {
+                @include absoluteFill;
+                display: flex;
+                overflow: auto;
+            }
         }
 
         &__layout_border_container {

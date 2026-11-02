@@ -391,7 +391,9 @@ export class DragDropManager {
                 this._controller.checkForBorderToShow(pos.x, pos.y);
             }
 
-            const dropInfo = this._controller.getModel().findDropTargetNode(this._controller.getLayoutId(), DragDropManager.dragState!.dragNode!, pos.x, pos.y, this.isExcludeCenter());
+            // with scrollOnOverflow only the visible part of the main area takes drops
+            const viewport = this._controller.isScrollOnOverflow() ? this._controller.getMainViewportRect() : undefined;
+            const dropInfo = this._controller.getModel().findDropTargetNode(this._controller.getLayoutId(), DragDropManager.dragState!.dragNode!, pos.x, pos.y, this.isExcludeCenter(), viewport);
             if (dropInfo && this.canDropAllDragNodes(dropInfo)) {
                 // a floating panel's layout can split a tabset or dock to a layout edge (the root
                 // row), never dock to the center or into a border

@@ -687,6 +687,7 @@ function App() {
                 onRenderDragRect={onRenderDragRect}
                 onExternalDrag={onExternalDrag}
                 realtimeResize={realtimeResize}
+                scrollOnOverflow={layoutName?.startsWith("test_scroll") === true}
                 tabNavigation={layoutName === "test_area_navigation" ? "areas" : "dom"}
                 tabSelection={layoutName === "test_multi_select" || !testing.isTestLayout(layoutName)}
                 keyMap={{ focusTabToggle: layoutName === "test_area_navigation" ? undefined : "F6", focusNextTabset: "Ctrl+]", focusPreviousTabset: "Ctrl+[" }}

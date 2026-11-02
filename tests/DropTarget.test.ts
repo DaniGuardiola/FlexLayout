@@ -248,3 +248,35 @@ describe("RowNode.canDrop", () => {
         expect(root.canDrop(dragTab(), 200, 150)).equal(undefined);
     });
 });
+
+describe("Model.findDropTargetNode with a scrolled main area", () => {
+    const json: IJsonModel = {
+        global: {},
+        layout: {
+            type: "row",
+            id: "root",
+            children: [
+                { type: "tabset", id: "ts0", children: [{ type: "tab", id: "tA", name: "A" }] },
+                { type: "tabset", id: "ts1", children: [{ type: "tab", id: "tB", name: "B" }] },
+            ],
+        },
+    };
+
+    it("only lets tabsets inside the visible part of the main area take drops", () => {
+        const model = Model.fromJson(json);
+        const root = model.getRootRow() as RowNode;
+        const ts1 = model.getNodeById("ts1") as TabSetNode;
+        // the second tabset is scrolled partly out of the visible area, which ends at x 300
+        root.setRect(new Rect(0, 0, 400, 100));
+        (model.getNodeById("ts0") as TabSetNode).setRect(new Rect(0, 0, 200, 100));
+        ts1.setRect(new Rect(200, 0, 200, 100));
+        ts1.setContentRect(new Rect(200, 20, 200, 80));
+        ts1.setTabStripRect(new Rect(200, 0, 200, 20));
+        const drag = model.getNodeById("tA") as TabNode;
+        const viewport = new Rect(0, 0, 300, 100);
+        expect(model.findDropTargetNode(Model.MAIN_LAYOUT_ID, drag, 250, 60, false, viewport)?.node).toBe(ts1);
+        expect(model.findDropTargetNode(Model.MAIN_LAYOUT_ID, drag, 350, 60, false, viewport)).toBeUndefined();
+        // without a viewport the whole root row takes drops, as before
+        expect(model.findDropTargetNode(Model.MAIN_LAYOUT_ID, drag, 350, 60)?.node).toBe(ts1);
+    });
+});

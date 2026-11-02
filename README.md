@@ -616,6 +616,23 @@ This adds a new grid component to the tabset with ID "NAVIGATION". (where `layou
 
 See [External Drag](https://caplin.github.io/FlexLayout/demos/v0.11/examples/external-drag/) — `examples/external-drag/ExternalDrag.tsx` and [Sticky Button](https://caplin.github.io/FlexLayout/demos/v0.11/examples/sticky-button/) — `examples/sticky-button/StickyButton.tsx`.
 
+## Scrolling When Tabsets No Longer Fit
+
+Tabsets keep their minimum size (`tabSetMinWidth` / `tabSetMinHeight` in the global attributes, or a
+tabset's own `minWidth` / `minHeight`), and splitters stop there. By default a layout whose tabsets no
+longer fit at those sizes is clipped. With the `scrollOnOverflow` prop, the area inside the borders
+scrolls instead, as a last resort, while the borders and their tabs stay in place:
+
+```javascript
+<Layout model={model} factory={factory} scrollOnOverflow />
+```
+
+Tab content follows the scroll and is clipped to the visible part of the main area, so a tabset
+scrolled under a border neither shows nor takes the pointer. Only visible tabsets take drops. Moving
+focus into a tab panel scrolled out of view scrolls the main area just enough to show the focused
+element; tab buttons scroll into view as the browser focuses them. A maximized tabset fills the
+visible area and the main area does not scroll while it is maximized.
+
 ## Finding Nodes and Their Elements
 
 The Layout Ref also maps between the model and the rendered elements, so application code (focus management, custom keys, highlighting) does not need to rely on the layout's internal element ids or class names:

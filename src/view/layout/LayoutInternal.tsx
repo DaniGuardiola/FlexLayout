@@ -322,6 +322,10 @@ export const LayoutInternal = React.forwardRef<LayoutController, ILayoutInternal
             onDragOver={controller.getDragDropManager().onDragOver}
             onDrop={controller.getDragDropManager().onDrop}
             onPointerDown={controller.onLayoutPointerDown}
+            onFocus={controller.isScrollOnOverflow() ? controller.onLayoutFocus : undefined}
+            // tab panels of tabsets scrolled out of the main area sit outside the root; clipping keeps
+            // them from making the page scroll
+            style={controller.isScrollOnOverflow() ? { overflow: "clip" } : undefined}
         >
             {areaSentinels[0]}
             {metrics}
