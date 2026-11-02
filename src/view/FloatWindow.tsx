@@ -3,7 +3,7 @@ import { CLASSES } from "../CSSClassNames";
 import { LayoutController } from "./layout/LayoutInternal";
 import { ModelLayout } from "../model/ModelLayout";
 import { Rect } from "../model/Rect";
-import { startDrag, getPageMetrics } from "./Utils";
+import { startDrag, getPageMetrics, isDragPress } from "./Utils";
 import { Actions } from "../model/Actions";
 import { I18nLabel } from "./I18nLabel";
 
@@ -152,6 +152,9 @@ export const FloatWindow = (props: React.PropsWithChildren<IFloatWindowProps>) =
 
     const onPointerDownHeader = (e: React.PointerEvent<HTMLElement>) => {
         e.stopPropagation();
+        if (!isDragPress(e)) {
+            return;
+        }
         const offset = { x: e.clientX - rect.x, y: e.clientY - rect.y };
         controller.showOverlayOnAllWindows(true);
 
@@ -214,6 +217,9 @@ export const FloatWindow = (props: React.PropsWithChildren<IFloatWindowProps>) =
     };
 
     const onPointerDownResize = (e: React.PointerEvent<HTMLElement>, direction: FloatWindowResizeDirection) => {
+        if (!isDragPress(e)) {
+            return;
+        }
         const startRect = rect;
         const startPos = { x: e.clientX, y: e.clientY };
         controller.showOverlayOnAllWindows(true);

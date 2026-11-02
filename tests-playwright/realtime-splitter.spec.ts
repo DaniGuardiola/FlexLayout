@@ -164,3 +164,40 @@ test("realtime drag inside a float window stays correct (fallback path)", async 
     });
     expect(finite).toBe(true);
 });
+
+test("right-clicks and Ctrl+clicks on a splitter do not drag it", async ({ page }) => {
+    await gotoLayout(page, "rt_secondary", bigLayout());
+    const splitter = page.locator('[data-layout-path="/s0"]');
+    await splitter.waitFor();
+    const sr = await waitForBox(splitter, "/s0");
+
+    const result = await page.evaluate(
+        ({ cx, cy }) => {
+            const grows = () => [...document.querySelectorAll<HTMLElement>(".flexlayout__row")].map((el) => getComputedStyle(el).flexGrow).join();
+            const before = grows();
+            const presses = [
+                { button: 2, ctrlKey: false },
+                { button: 1, ctrlKey: false },
+                { button: 0, ctrlKey: true },
+            ];
+            const outlines: boolean[] = [];
+            const splitter = document.querySelector('[data-layout-path="/s0"]') as HTMLElement;
+            for (const press of presses) {
+                const opts = (x: number, y: number) => ({ bubbles: true, cancelable: true, clientX: x, clientY: y, pointerId: 1, ...press });
+                splitter.dispatchEvent(new PointerEvent("pointerdown", opts(cx, cy)));
+                for (let i = 1; i <= 10; i++) {
+                    document.dispatchEvent(new PointerEvent("pointermove", opts(cx, cy + i * 10)));
+                }
+                outlines.push(!!document.querySelector(".flexlayout__splitter_drag"));
+                // the context menu would swallow the release, so none is sent
+            }
+            // a later move with no button held must not resize either
+            document.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX: cx, clientY: cy + 150, pointerId: 1 }));
+            return { outlines, same: grows() === before };
+        },
+        { cx: sr.x + sr.width / 2, cy: sr.y + sr.height / 2 },
+    );
+
+    expect(result.outlines).toEqual([false, false, false]);
+    expect(result.same).toBe(true);
+});

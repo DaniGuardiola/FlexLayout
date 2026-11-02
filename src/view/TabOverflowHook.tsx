@@ -4,7 +4,7 @@ import { BorderNode } from "../model/BorderNode";
 import { Orientation } from "../model/Orientation";
 import { LayoutController } from "./layout/LayoutInternal";
 import { TabNode } from "../model/TabNode";
-import { domId, startDrag } from "./Utils";
+import { domId, isDragPress, startDrag } from "./Utils";
 import { Rect } from "../model/Rect";
 
 /** @internal */
@@ -302,6 +302,9 @@ export const useTabOverflow = (
     const onScrollPointerDown = React.useCallback(
         (event: React.PointerEvent<HTMLElement>) => {
             event.stopPropagation();
+            if (!isDragPress(event)) {
+                return;
+            }
             miniScrollRef.current!.setPointerCapture(event.pointerId);
             const r = miniScrollRef.current!.getBoundingClientRect()!;
             if (orientation === Orientation.HORZ) {

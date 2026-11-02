@@ -7,7 +7,7 @@ import { Orientation } from "../model/Orientation";
 import { CLASSES } from "../CSSClassNames";
 import { I18nLabel } from "./I18nLabel";
 import { LayoutController } from "./layout/LayoutInternal";
-import { enablePointerOnIFrames, hasModifier, isDesktop, startDrag } from "./Utils";
+import { enablePointerOnIFrames, hasModifier, isDesktop, isDragPress, startDrag } from "./Utils";
 import { Rect } from "../model/Rect";
 
 /** @internal */
@@ -68,6 +68,9 @@ export const Splitter = (props: ISplitterProps) => {
 
     const onPointerDown = (event: React.PointerEvent<HTMLElement>) => {
         event.stopPropagation();
+        if (!isDragPress(event)) {
+            return;
+        }
         if (node instanceof RowNode) {
             initalSizes.current = node.getSplitterInitials(index);
         }

@@ -115,6 +115,12 @@ export function getTabbableElements(container: HTMLElement): HTMLElement[] {
     );
 }
 
+/** @internal whether a press starts a pointer drag: only the main button does, as the context menu that other
+ * buttons and Ctrl+click (on macOS) open swallows the release, leaving the drag stuck to the pointer */
+export function isDragPress(event: React.PointerEvent<Element>) {
+    return event.button === 0 && !event.ctrlKey;
+}
+
 /** @internal */
 export function isAuxMouseEvent(event: React.MouseEvent<HTMLElement, MouseEvent> | React.TouchEvent<HTMLElement>) {
     let auxEvent = false;
