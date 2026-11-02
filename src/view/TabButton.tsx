@@ -351,7 +351,8 @@ export const TabButton = (props: ITabButtonProps) => {
             onAuxClick={onAuxMouseClick}
             onContextMenu={onContextMenu}
             title={tabNode.getHelpText()}
-            draggable={true}
+            // while renaming, presses in the text box select its text instead of dragging the tab
+            draggable={!editing}
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             onDoubleClick={onDoubleClick}

@@ -508,7 +508,7 @@ export const TabSet = (props: ITabSetProps) => {
                         onContextMenu={onContextMenu}
                         onClick={onAuxMouseClick}
                         onAuxClick={onAuxMouseClick}
-                        draggable={true}
+                        draggable={!editingHere}
                         onDragStart={onDragStart}
                         onDragEnd={onDragEnd}
                     >
@@ -545,7 +545,7 @@ export const TabSet = (props: ITabSetProps) => {
                         onContextMenu={onContextMenu}
                         onClick={onAuxMouseClick}
                         onAuxClick={onAuxMouseClick}
-                        draggable={true}
+                        draggable={!editingHere}
                         onWheel={onMouseWheel}
                         onDragStart={onDragStart}
                         onDragEnd={onDragEnd}

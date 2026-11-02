@@ -718,6 +718,27 @@ test.describe("Others", () => {
         await checkTabButton(page, "/ts1", 0, true, "Renamed");
     });
 
+    test("rename tab text box selects text with the pointer instead of dragging the tab", async ({ page }) => {
+        await findPath(page, "/ts1/tb0").dblclick();
+        const textbox = findPath(page, "/ts1/tb0/textbox");
+        await expect(textbox).toBeVisible();
+        await textbox.fill("Renamed tab");
+        await page.evaluate(() => {
+            (window as unknown as { __dragStarts: number }).__dragStarts = 0;
+            document.addEventListener("dragstart", () => (window as unknown as { __dragStarts: number }).__dragStarts++, true);
+        });
+        const box = (await textbox.boundingBox())!;
+        await page.mouse.move(box.x + 4, box.y + box.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 5 });
+        await page.mouse.move(box.x + box.width - 4, box.y + box.height / 2, { steps: 5 });
+        await page.mouse.up();
+        expect(await page.evaluate(() => (window as unknown as { __dragStarts: number }).__dragStarts)).toBe(0);
+        const selection = await textbox.evaluate((input: HTMLInputElement) => (input.selectionEnd ?? 0) - (input.selectionStart ?? 0));
+        expect(selection).toBeGreaterThan(0);
+        await expect(textbox).toBeVisible();
+    });
+
     test("rename tab cancelled with esc", async ({ page }) => {
         await findPath(page, "/ts1/tb0").dblclick();
         const textbox = await findPath(page, "/ts1/tb0/textbox");
