@@ -119,6 +119,8 @@ export class LayoutController {
     private _currentAreaId: string | undefined = undefined;
     private _areaSentinels: (HTMLElement | null)[] = [null, null];
     private _areaTabPending: boolean = false;
+    // whether that Tab was pressed outside the layout, as only then does focus enter it
+    private _areaTabFromOutside: boolean = false;
     private _splitters: Map<string, HTMLElement> = new Map();
     // the id of the element to focus after the next render (a tab button re-rendered by a maximize toggle)
     private _pendingFocusId: string | undefined = undefined;
@@ -943,6 +945,7 @@ export class LayoutController {
     onAreaTabKeyDown = (event: KeyboardEvent) => {
         if (event.key === "Tab" && this.isAreaNavigation()) {
             this._areaTabPending = true;
+            this._areaTabFromOutside = !this.getRootDiv()?.contains(event.target as globalThis.Node);
             this._currentWindow?.setTimeout(() => {
                 this._areaTabPending = false;
             });
@@ -958,7 +961,10 @@ export class LayoutController {
             return;
         }
         const from = event.relatedTarget as Element | null;
-        if (this._areaTabPending && !root.contains(from)) {
+        // a Tab pressed inside the layout can still bring focus back from outside it, through focus
+        // guards that keep a portaled popup in the Tab order (as Ariakit's), so only a Tab pressed
+        // outside it enters the layout
+        if (this._areaTabPending && this._areaTabFromOutside && !root.contains(from)) {
             const current = this.getCurrentArea();
             const entry = current && this.getAreaStop(current);
             if (entry && entry !== target) {

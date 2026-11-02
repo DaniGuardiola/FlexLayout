@@ -232,6 +232,18 @@ describe("area navigation", () => {
         expect(tab("t4")).toHaveFocus();
     });
 
+    it("keeps Tab within content that passes through focus guards outside the layout", () => {
+        renderLayout();
+        // a portaled popup keeps its place in the Tab order with guards outside the layout, so a
+        // Tab inside the content can bring focus back in from outside
+        const guard = byText("after");
+        focus(byLabel("T0 field"));
+        press("Tab");
+        focus(guard);
+        focus(byText("T0 button"));
+        expect(byText("T0 button")).toHaveFocus();
+    });
+
     it("does not redirect focus moved into the layout by other means", async () => {
         renderLayout();
         focus(byText("before"));
